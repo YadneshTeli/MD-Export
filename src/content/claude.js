@@ -3,7 +3,7 @@
  * DOM: [data-testid="human-turn"] and [data-testid="ai-turn"]
  */
 
-import { cleanHtml, getPageTitle } from './base_scraper.js';
+import { cleanHtml, htmlToMarkdown, getPageTitle } from './base_scraper.js';
 
 export function scrapeConversation() {
     const messages = [];
@@ -22,9 +22,11 @@ export function scrapeConversation() {
 
             // Find the prose/markdown content
             const contentEl = turn.querySelector('.prose, div[class*="prose"], div[class*="markdown"]') || turn;
+            const html = cleanHtml(contentEl);
             messages.push({
                 role,
-                html: cleanHtml(contentEl),
+                markdown: htmlToMarkdown(html),
+                html,
                 text: contentEl.textContent.trim(),
             });
         });
@@ -36,7 +38,8 @@ export function scrapeConversation() {
         fallbackTurns.forEach(el => {
             const cls = el.className.toString().toLowerCase();
             const role = cls.includes('human') ? 'user' : 'assistant';
-            messages.push({ role, html: cleanHtml(el), text: el.textContent.trim() });
+            const html = cleanHtml(el);
+            messages.push({ role, markdown: htmlToMarkdown(html), html, text: el.textContent.trim() });
         });
     }
 

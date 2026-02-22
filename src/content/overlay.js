@@ -13,18 +13,20 @@
 
 // ── Safe IIFE wrapper (prevents top-level errors from killing the whole script)
 
+import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
+
 (function mdeOverlayInit() {
   'use strict';
 
   // ── Site config map ───────────────────────────────────────────────────────
 
   const SITE_CONFIG = {
-    'chat.openai.com': { name: 'ChatGPT', msgSelector: 'article[data-testid^="conversation-turn-"]', roleAttr: 'data-turn' },
-    'chatgpt.com': { name: 'ChatGPT', msgSelector: 'article[data-testid^="conversation-turn-"]', roleAttr: 'data-turn' },
-    'gemini.google.com': { name: 'Gemini', msgSelector: 'div.conversation-container', roleAttr: null },
-    'grok.com': { name: 'Grok', msgSelector: '[data-testid*="message"],[data-testid*="turn"]', roleAttr: 'data-testid' },
-    'x.com': { name: 'Grok', msgSelector: '[data-testid*="message"],[data-testid*="turn"]', roleAttr: 'data-testid' },
-    'claude.ai': { name: 'Claude', msgSelector: '[data-testid="human-turn"],[data-testid="ai-turn"]', roleAttr: 'data-testid' },
+    'chat.openai.com': { name: 'ChatGPT', msgSelector: 'article[data-testid^="conversation-turn-"]', roleAttr: 'data-turn', contentSelector: { user: '.whitespace-pre-wrap', assistant: 'div.markdown.prose, div[class*="markdown prose"], div[class*="markdown"]' } },
+    'chatgpt.com':     { name: 'ChatGPT', msgSelector: 'article[data-testid^="conversation-turn-"]', roleAttr: 'data-turn', contentSelector: { user: '.whitespace-pre-wrap', assistant: 'div.markdown.prose, div[class*="markdown prose"], div[class*="markdown"]' } },
+    'gemini.google.com': { name: 'Gemini', msgSelector: 'div.conversation-container', roleAttr: null, contentSelector: { user: '.query-text-line, .query-text', assistant: 'div.markdown.markdown-main-panel, div[class*="markdown-main-panel"]' } },
+    'grok.com': { name: 'Grok', msgSelector: '[data-testid*="message"],[data-testid*="turn"]', roleAttr: 'data-testid', contentSelector: { user: null, assistant: 'div[class*="message-content"], .prose, div[class*="markdown"]' } },
+    'x.com':    { name: 'Grok', msgSelector: '[data-testid*="message"],[data-testid*="turn"]', roleAttr: 'data-testid', contentSelector: { user: null, assistant: 'div[class*="message-content"], .prose, div[class*="markdown"]' } },
+    'claude.ai': { name: 'Claude', msgSelector: '[data-testid="human-turn"],[data-testid="ai-turn"]', roleAttr: 'data-testid', contentSelector: { user: '.prose, div[class*="prose"]', assistant: '.prose, div[class*="prose"], div[class*="markdown"]' } },
   };
 
   const site = SITE_CONFIG[location.hostname];
@@ -443,11 +445,20 @@
   function collectMessages() {
     rawMessages = [];
     const nodes = document.querySelectorAll(site.msgSelector);
+    const contentSel = site.contentSelector || {};
+
     nodes.forEach(el => {
       const role = detectRole(el);
-      const text = (el.textContent || '').trim().replace(/\s+/g, ' ');
-      const html = el.innerHTML || '';
-      if (text) rawMessages.push({ role, text, html });
+      // Target the specific content element (prose/markdown div) where possible
+      // so we scrape just the message body, not surrounding UI controls/buttons.
+      const sel = role === 'user' ? contentSel.user : contentSel.assistant;
+      const contentEl = sel ? (el.querySelector(sel) || el) : el;
+
+      const html = cleanHtml(contentEl);
+      const markdown = htmlToMarkdown(html);
+      const text = contentEl.textContent.trim();
+
+      if (text) rawMessages.push({ role, markdown, html, text });
     });
 
     const totalEl = document.getElementById('mde-total');

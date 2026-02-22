@@ -20,9 +20,11 @@ export function scrapeConversation() {
 
             const contentEl = turn.querySelector('div[class*="message-content"], div[class*="MessageContent"], .prose, div[class*="markdown"]');
             if (contentEl) {
+                const html = cleanHtml(contentEl);
                 messages.push({
                     role,
-                    html: cleanHtml(contentEl),
+                    markdown: htmlToMarkdown(html),
+                    html,
                     text: contentEl.textContent.trim(),
                 });
             }
@@ -35,9 +37,11 @@ export function scrapeConversation() {
         msgBlocks.forEach(block => {
             const isUser = block.classList.toString().toLowerCase().includes('user') ||
                 block.querySelector('[class*="user"]') !== null;
+            const html = cleanHtml(block);
             messages.push({
                 role: isUser ? 'user' : 'assistant',
-                html: cleanHtml(block),
+                markdown: htmlToMarkdown(html),
+                html,
                 text: block.textContent.trim(),
             });
         });
@@ -47,8 +51,8 @@ export function scrapeConversation() {
     if (messages.length === 0) {
         const humanMsgs = document.querySelectorAll('[aria-label*="Human message"], [aria-label*="user message"]');
         const aiMsgs = document.querySelectorAll('[aria-label*="AI message"], [aria-label*="Grok"]');
-        humanMsgs.forEach(el => messages.push({ role: 'user', html: cleanHtml(el), text: el.textContent.trim() }));
-        aiMsgs.forEach(el => messages.push({ role: 'assistant', html: cleanHtml(el), text: el.textContent.trim() }));
+        humanMsgs.forEach(el => { const html = cleanHtml(el); messages.push({ role: 'user', markdown: htmlToMarkdown(html), html, text: el.textContent.trim() }); });
+        aiMsgs.forEach(el => { const html = cleanHtml(el); messages.push({ role: 'assistant', markdown: htmlToMarkdown(html), html, text: el.textContent.trim() }); });
     }
 
     if (messages.length === 0) return null;

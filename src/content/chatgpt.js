@@ -19,37 +19,52 @@ export function scrapeConversation() {
     const messages = [];
 
     articles.forEach((article) => {
-        const role = article.getAttribute('data-turn'); // "user" or "assistant"
+        // Prefer data-turn; fall back to data-message-author-role inside the article
+        const role = article.getAttribute('data-turn')
+            || article.querySelector('[data-message-author-role]')?.getAttribute('data-message-author-role')
+            || null;
         if (!role) return;
 
         let contentHtml = '';
         let contentText = '';
 
         if (role === 'user') {
-            // User bubble
+            // User bubble — whitespace-pre-wrap contains the typed text
             const bubble = article.querySelector('.whitespace-pre-wrap');
             if (bubble) {
                 contentText = bubble.textContent.trim();
                 contentHtml = `<p>${bubble.innerHTML}</p>`;
             }
         } else {
-            // Assistant markdown div
-            const markdownEl = article.querySelector('div.markdown.prose, div[class*="markdown prose"]');
+            // Assistant markdown div — try increasingly broad selectors
+            const markdownEl =
+                article.querySelector('div.markdown.prose') ||
+                article.querySelector('div[class*="markdown prose"]') ||
+                article.querySelector('div[class*="markdown"]');
+
             if (markdownEl) {
                 contentHtml = cleanHtml(markdownEl);
                 contentText = markdownEl.textContent.trim();
             } else {
-                // fallback: data-message-author-role
                 const msgEl = article.querySelector('[data-message-author-role="assistant"]');
                 if (msgEl) {
-                    contentHtml = cleanHtml(msgEl);
-                    contentText = msgEl.textContent.trim();
+                    // Clone and strip the role label heading before extracting
+                    const clone = msgEl.cloneNode(true);
+                    clone.querySelectorAll('h1,h2,h3,h4,h5,h6,[class*="author"],[class*="role-label"]')
+                        .forEach(el => el.remove());
+                    contentHtml = cleanHtml(clone);
+                    contentText = clone.textContent.trim();
                 }
             }
         }
 
         if (contentHtml || contentText) {
-            messages.push({ role, html: contentHtml, text: contentText });
+            messages.push({
+                role,
+                markdown: contentHtml ? htmlToMarkdown(contentHtml) : '',
+                html: contentHtml,
+                text: contentText,
+            });
         }
     });
 

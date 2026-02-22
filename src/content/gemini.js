@@ -39,7 +39,7 @@ export function scrapeConversation() {
             const cleaned = cleanHtml(panel);
             const text = panel.textContent.trim();
             if (text) {
-                messages.push({ role: 'assistant', html: cleaned, text });
+                messages.push({ role: 'assistant', markdown: htmlToMarkdown(cleaned), html: cleaned, text });
             }
         });
     });
