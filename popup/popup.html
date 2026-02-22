@@ -63,6 +63,31 @@
         </button>
       </div>
 
+      <!-- Message Range Selector -->
+      <div class="section-label">
+        Message Selection
+        <span id="msg-count-badge" class="msg-count-badge"></span>
+      </div>
+      <div class="quick-chips" id="quick-chips">
+        <button class="chip chip-active" data-preset="all">All</button>
+        <button class="chip" data-preset="first10">First 10</button>
+        <button class="chip" data-preset="last10">Last 10</button>
+        <button class="chip" data-preset="first-half">First ½</button>
+        <button class="chip" data-preset="last-half">Last ½</button>
+      </div>
+      <div class="range-inputs">
+        <div class="range-field">
+          <label for="range-from">From</label>
+          <input type="number" id="range-from" min="1" value="1" />
+        </div>
+        <div class="range-sep">—</div>
+        <div class="range-field">
+          <label for="range-to">To</label>
+          <input type="number" id="range-to" min="1" value="1" />
+        </div>
+        <span id="range-preview" class="range-preview">0 msgs</span>
+      </div>
+
       <!-- Export Button -->
       <button id="export-btn" class="export-btn">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

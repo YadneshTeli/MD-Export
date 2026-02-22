@@ -19,6 +19,8 @@ const SUPPORTED_SITES = {
 
 let conversationData = null;
 let selectedFormat = 'md';
+let rangeFrom = 1;   // 1-indexed, inclusive
+let rangeTo = 1;     // 1-indexed, inclusive
 
 // DOM elements
 const siteBadge = document.getElementById('site-badge');
@@ -33,6 +35,11 @@ const copyLabel = document.getElementById('copy-label');
 const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
 const fmtBtns = document.querySelectorAll('.fmt-btn');
+const rangeFromEl = document.getElementById('range-from');
+const rangeToEl = document.getElementById('range-to');
+const rangePreview = document.getElementById('range-preview');
+const msgCountBadge = document.getElementById('msg-count-badge');
+const chips = document.querySelectorAll('.chip');
 
 // ---- Utilities ----
 function setStatus(type, msg) {
@@ -53,6 +60,70 @@ function showUnsupported() {
     siteBadge.classList.add('hidden');
     mainContent.classList.add('hidden');
     setStatus('error', 'Unsupported page');
+}
+
+// ---- Range selector ----
+function initRange(total) {
+    rangeFrom = 1;
+    rangeTo = total;
+    rangeFromEl.max = total;
+    rangeToEl.max = total;
+    rangeFromEl.value = 1;
+    rangeToEl.value = total;
+    msgCountBadge.textContent = `${total} total`;
+    updateRangePreview();
+}
+
+function updateRangePreview() {
+    const f = parseInt(rangeFromEl.value) || 1;
+    const t = parseInt(rangeToEl.value) || rangeTo;
+    rangeFrom = Math.max(1, Math.min(f, t));
+    rangeTo = Math.max(rangeFrom, t);
+    rangeFromEl.value = rangeFrom;
+    rangeToEl.value = rangeTo;
+    const count = rangeTo - rangeFrom + 1;
+    const total = conversationData?.messages?.length || 0;
+    rangePreview.textContent = rangeFrom === 1 && rangeTo === total
+        ? 'All msgs'
+        : `${count} msg${count !== 1 ? 's' : ''}`;
+    // Deactivate all chips if manual edit
+    chips.forEach(c => c.classList.remove('chip-active'));
+    if (rangeFrom === 1 && rangeTo === total) {
+        document.querySelector('[data-preset="all"]')?.classList.add('chip-active');
+    }
+}
+
+rangeFromEl.addEventListener('input', updateRangePreview);
+rangeToEl.addEventListener('input', updateRangePreview);
+
+chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+        const total = conversationData?.messages?.length || 0;
+        if (!total) return;
+        const preset = chip.dataset.preset;
+        chips.forEach(c => c.classList.remove('chip-active'));
+        chip.classList.add('chip-active');
+        switch (preset) {
+            case 'all': rangeFromEl.value = 1; rangeToEl.value = total; break;
+            case 'first10': rangeFromEl.value = 1; rangeToEl.value = Math.min(10, total); break;
+            case 'last10': rangeFromEl.value = Math.max(1, total - 9); rangeToEl.value = total; break;
+            case 'first-half': rangeFromEl.value = 1; rangeToEl.value = Math.ceil(total / 2); break;
+            case 'last-half': rangeFromEl.value = Math.floor(total / 2) + 1; rangeToEl.value = total; break;
+        }
+        rangeFrom = parseInt(rangeFromEl.value);
+        rangeTo = parseInt(rangeToEl.value);
+        const count = rangeTo - rangeFrom + 1;
+        rangePreview.textContent = preset === 'all'
+            ? 'All msgs'
+            : `${count} msg${count !== 1 ? 's' : ''}`;
+    });
+});
+
+/** Return null for full export, or { from, to } for partial */
+function getRange() {
+    const total = conversationData?.messages?.length || 0;
+    if (rangeFrom === 1 && rangeTo === total) return null;
+    return { from: rangeFrom, to: rangeTo };
 }
 
 // ---- Format selection ----
@@ -90,6 +161,7 @@ async function init() {
         if (response?.success && response.data?.messages?.length > 0) {
             conversationData = response.data;
             showMain(site, conversationData.title || `${site} Chat`);
+            initRange(conversationData.messages.length);
             setStatus('success', `${conversationData.messages.length} messages ready`);
         } else {
             showMain(site, tab.title || `${site} Chat`);
@@ -113,12 +185,16 @@ exportBtn.addEventListener('click', async () => {
     setStatus('loading', 'Processing conversation…');
 
     try {
-        // Run preprocessing pipeline on raw scraped data
-        const processed = preprocess(conversationData);
-        const { stats } = processed;
-        setStatus('loading', `Processed ${stats.messageCount} messages (${stats.totalWords.toLocaleString()} words)… exporting`);
+        // Build range (null = full conversation)
+        const range = getRange();
+        const rangeLabel = range ? ` (msgs ${range.from}–${range.to})` : '';
 
-        const safe = safeFilename(processed);
+        // Run preprocessing pipeline on raw scraped data
+        const processed = preprocess(conversationData, range);
+        const { stats } = processed;
+        setStatus('loading', `Processed ${stats.messageCount} messages${rangeLabel}… exporting`);
+
+        const safe = safeFilename(processed) + (range ? `_msgs${range.from}-${range.to}` : '');
 
         if (selectedFormat === 'md') {
             const md = toMarkdown(processed);
@@ -155,10 +231,12 @@ exportBtn.addEventListener('click', async () => {
 copyBtn.addEventListener('click', async () => {
     if (!conversationData) return;
     try {
-        const md = toMarkdown(conversationData);
+        const range = getRange();
+        const processed = preprocess(conversationData, range);
+        const md = toMarkdown(processed);
         await navigator.clipboard.writeText(md);
         copyLabel.textContent = '✓ Copied!';
-        setStatus('success', 'Markdown copied to clipboard');
+        setStatus('success', `Markdown copied (${processed.stats.messageCount} msgs)`);
         setTimeout(() => { copyLabel.textContent = 'Copy as Markdown'; }, 2000);
     } catch (e) {
         setStatus('error', 'Clipboard error: ' + e.message);
