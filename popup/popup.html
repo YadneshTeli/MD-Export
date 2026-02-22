@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MD-Export</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="24" height="24" rx="6" fill="url(#grad1)"/>
+          <path d="M6 8h12M6 12h8M6 16h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="grad1" x1="0" y1="0" x2="24" y2="24">
+              <stop offset="0%" stop-color="#6C63FF"/>
+              <stop offset="100%" stop-color="#3B82F6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="logo-text">MD-Export</span>
+      </div>
+      <div id="site-badge" class="site-badge hidden">
+        <span id="site-name">ChatGPT</span>
+      </div>
+    </header>
+
+    <!-- Status Banner -->
+    <div id="unsupported-banner" class="banner banner-warn hidden">
+      <span>⚠️ Open a chat conversation on a supported site first.</span>
+    </div>
+
+    <!-- Main content -->
+    <main id="main-content" class="main hidden">
+      <!-- Chat info -->
+      <div class="chat-info">
+        <div class="info-icon">💬</div>
+        <div class="chat-title" id="chat-title">Loading conversation…</div>
+      </div>
+
+      <!-- Format selector -->
+      <div class="section-label">Export Format</div>
+      <div class="format-group" role="group" aria-label="Export format">
+        <button class="fmt-btn active" data-format="md" id="btn-md">
+          <span class="fmt-icon">#</span>
+          <span class="fmt-name">Markdown</span>
+          <span class="fmt-ext">.md</span>
+        </button>
+        <button class="fmt-btn" data-format="docx" id="btn-docx">
+          <span class="fmt-icon">W</span>
+          <span class="fmt-name">Word</span>
+          <span class="fmt-ext">.docx</span>
+        </button>
+        <button class="fmt-btn" data-format="pdf" id="btn-pdf">
+          <span class="fmt-icon">P</span>
+          <span class="fmt-name">PDF</span>
+          <span class="fmt-ext">.pdf</span>
+        </button>
+      </div>
+
+      <!-- Export Button -->
+      <button id="export-btn" class="export-btn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1v9M4.5 7l3.5 3.5L11.5 7M2 13h12" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span id="export-label">Export Conversation</span>
+      </button>
+
+      <!-- Copy to clipboard (MD only) -->
+      <button id="copy-btn" class="copy-btn">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="2" y="4" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M4 4V3a1 1 0 011-1h5a1 1 0 011 1v7a1 1 0 01-1 1h-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+        <span id="copy-label">Copy as Markdown</span>
+      </button>
+    </main>
+
+    <!-- Status / progress -->
+    <div id="status-bar" class="status-bar">
+      <span id="status-dot" class="dot dot-idle"></span>
+      <span id="status-text">Ready</span>
+    </div>
+  </div>
+
+  <script src="../dist/popup.js"></script>
+</body>
+</html>
