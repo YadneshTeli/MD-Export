@@ -12,41 +12,117 @@ import { stripInline } from '../pipeline/preprocess.js';
 export function toMarkdown(processed) {
     const { title, site, exportedAt, stats, messages } = processed;
     const date = new Date(exportedAt).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric',
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
 
-    let md = '';
+    const lines = [];
 
     // ── Header ────────────────────────────────────────────────────────────────
-    md += `# ${title}\n\n`;
-    md += `| | |\n|---|---|\n`;
-    md += `| **Platform** | ${site} |\n`;
-    md += `| **Exported** | ${date} |\n`;
-    md += `| **Messages** | ${stats.messageCount} (${stats.userMessages} from you, ${stats.assistantMessages} from ${site}) |\n`;
-    md += `| **Total Words** | ${stats.totalWords.toLocaleString()} |\n`;
+    lines.push(`<div align="center">`);
+    lines.push(``);
+    lines.push(`# ${title}`);
+    lines.push(``);
+    lines.push(`**${site} Conversation Export**`);
+    lines.push(``);
+    lines.push(`</div>`);
+    lines.push(``);
+    lines.push(`---`);
+    lines.push(``);
+
+    // ── Table of Contents ─────────────────────────────────────────────────────
+    lines.push(`## Table of Contents`);
+    lines.push(``);
+    lines.push(`- [Overview](#overview)`);
+    lines.push(`- [Messages](#messages)`);
+    lines.push(``);
+    lines.push(`---`);
+    lines.push(``);
+
+    // ── Overview ──────────────────────────────────────────────────────────────
+    lines.push(`## Overview`);
+    lines.push(``);
+
+    // Stats visual table
+    lines.push(`<table>`);
+    lines.push(`<tr>`);
+    lines.push(`<td align="center"><b>Total Messages</b></td>`);
+    lines.push(`<td align="center"><b>Your Messages</b></td>`);
+    lines.push(`<td align="center"><b>${site}'s Messages</b></td>`);
+    lines.push(`<td align="center"><b>Total Words</b></td>`);
+    lines.push(`</tr>`);
+    lines.push(`<tr>`);
+    lines.push(`<td align="center">${stats.messageCount}</td>`);
+    lines.push(`<td align="center">${stats.userMessages}</td>`);
+    lines.push(`<td align="center">${stats.assistantMessages}</td>`);
+    lines.push(`<td align="center">${stats.totalWords.toLocaleString()}</td>`);
+    lines.push(`</tr>`);
+    lines.push(`</table>`);
+    lines.push(``);
+
+    // Metadata table
+    lines.push(`| Property | Value |`);
+    lines.push(`|:---------|:------|`);
+    lines.push(`| **Platform** | ${site} |`);
+    lines.push(`| **Exported** | ${date} |`);
+    lines.push(`| **Avg. Words / Message** | ${stats.avgWordsPerMessage} |`);
     if (stats.codeLanguages.length > 0) {
-        md += `| **Code** | ${stats.codeLanguages.join(', ')} |\n`;
+        lines.push(`| **Code Languages** | ${stats.codeLanguages.join(', ')} |`);
     }
-    md += `\n---\n\n`;
+    if (stats.hasCode) {
+        lines.push(`| **Messages with Code** | ${stats.messagesWithCode} |`);
+    }
+    if (stats.hasTable) {
+        lines.push(`| **Messages with Tables** | ${stats.messagesWithTable} |`);
+    }
+    lines.push(``);
+    lines.push(`---`);
+    lines.push(``);
 
     // ── Messages ──────────────────────────────────────────────────────────────
+    lines.push(`## Messages`);
+    lines.push(``);
+
     for (const msg of messages) {
-        const { role, markdown, index, wordCount, hasCode, codeLanguages } = msg;
+        const { role, markdown, index, wordCount, hasCode, codeLanguages, hasTable } = msg;
         const isUser = role === 'user';
-        const speaker = isUser ? `## 🧑 You` : `## 🤖 ${site}`;
+        const msgNum = index + 1;
 
-        md += `${speaker}\n`;
-        if (hasCode && codeLanguages.length > 0) {
-            md += `*Contains code: ${codeLanguages.join(', ')}*\n`;
+        // Build inline metadata for sub-label
+        const metaParts = [`${wordCount} words`];
+        if (hasCode && codeLanguages.length > 0) metaParts.push(`code: ${codeLanguages.join(', ')}`);
+        if (hasTable) metaParts.push(`table`);
+
+        const speaker = isUser ? `You` : site;
+        lines.push(`### ${speaker} <sub>#${msgNum} &nbsp;·&nbsp; ${metaParts.join(' · ')}</sub>`);
+        lines.push(``);
+
+        // Wrap long AI responses in a collapsible block
+        if (!isUser && wordCount > 300) {
+            lines.push(`<details>`);
+            lines.push(`<summary>View response (${wordCount} words)</summary>`);
+            lines.push(``);
+            lines.push(markdown);
+            lines.push(``);
+            lines.push(`</details>`);
+        } else {
+            lines.push(markdown);
         }
-        md += `\n`;
 
-        // Use the clean, sanitized markdown directly from the pipeline
-        md += markdown;
-        md += `\n\n---\n\n`;
+        lines.push(``);
+        lines.push(`---`);
+        lines.push(``);
     }
 
-    return md.trim();
+    // ── Footer ────────────────────────────────────────────────────────────────
+    lines.push(`<div align="center">`);
+    lines.push(``);
+    lines.push(`*Exported from ${site} &nbsp;·&nbsp; ${date}*`);
+    lines.push(``);
+    lines.push(`*Generated by [MD-Export](https://github.com/YadneshTeli/MD-Export)*`);
+    lines.push(``);
+    lines.push(`</div>`);
+
+    return lines.join('\n').trim();
 }
 
 export function downloadMarkdown(markdown, filename) {

@@ -100,7 +100,12 @@ function stageConvertMessage(msg) {
     let cleanedHtml = '';
     let markdown = '';
 
-    if (msg.html && hasDOMParser) {
+    if (msg.markdown) {
+        // Pre-converted markdown from content script (live DOM, citation-cleaned, Turndown-processed).
+        // This is the preferred path — use it directly.
+        markdown = msg.markdown;
+    } else if (msg.html && hasDOMParser) {
+        // Fallback: HTML string available and DOMParser exists (popup context).
         // Stage 2: Clean HTML (remove UI noise)
         try {
             const parser = new DOMParser();
@@ -112,11 +117,8 @@ function stageConvertMessage(msg) {
         }
         // Stage 3: HTML → GFM Markdown via Turndown
         markdown = htmlToMarkdown(cleanedHtml);
-    } else if (msg.markdown) {
-        // Pre-converted markdown (overlay sends this)
-        markdown = msg.markdown;
     } else {
-        // Plain text fallback — overlay text, or service worker context
+        // Last resort: plain text (no structure, no formatting)
         markdown = msg.text || '';
     }
 
@@ -131,6 +133,22 @@ function stageConvertMessage(msg) {
  * Targets: buttons, SVGs, tooltips, Grammarly, citation chips, source refs.
  */
 function removeNoiseNodes(dom) {
+    // ── Step 1: Remove ChatGPT citation pills FIRST (before generic pass).
+    // Actual structure from the DOM:
+    //   <span data-state="closed">
+    //     <span data-testid="webpage-citation-pill"><a>Plesk</a></span>
+    //   </span>
+    // Remove the outer span[data-state] to take the source name text with it.
+    dom.querySelectorAll('[data-testid="webpage-citation-pill"]').forEach(pill => {
+        const wrapper = pill.parentElement;
+        if (wrapper && wrapper.tagName === 'SPAN' && wrapper.hasAttribute('data-state')) {
+            wrapper.remove();
+        } else {
+            pill.remove();
+        }
+    });
+
+    // ── Step 2: Generic noise removal
     const noiseSelectors = [
         'button',
         'svg',
@@ -138,9 +156,20 @@ function removeNoiseNodes(dom) {
         'grammarly-desktop-integration',
         '[data-radix-focus-guard]',
         '.sr-only',
+        // ChatGPT source/citation elements
         'source-footnote',
         'sources-carousel-inline',
-        'source-inline-chip',
+        'source-attribution',
+        '[data-testid="source-footnote"]',
+        '[data-testid="web-browsing-attribution"]',
+        '[class*="browsing-attribution"]',
+        '[class*="source-attribution"]',
+        'cite',
+        // ChatGPT role labels
+        '[class*="author-name"]',
+        '[class*="role-label"]',
+        '[data-testid="conversation-turn-label"]',
+        // Other UI noise
         'model-thoughts',
         'tts-control',
         'bard-avatar',
@@ -155,13 +184,31 @@ function removeNoiseNodes(dom) {
     });
 }
 
-/**
- * Post-process Turndown output to strip exporter artifacts and normalise spacing.
- */
+// ─── Stage 4: Sanitize Markdown ──────────────────────────────────────────────
+
 function sanitizeMarkdown(md) {
-    return md
-        // Remove ## emoji speaker headers added by our own toMarkdown() formatter
-        .replace(/^##\s+[\u{1F300}-\u{1FFFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]\s+.*$/gmu, '')
+    let out = md;
+
+    // Strip "ChatGPT said:", "You said:", "Claude said:", etc. prefixes
+    out = out.replace(/^(?:ChatGPT|You|Claude|Gemini|Grok|Assistant|AI)\s+said:\s*/im, '');
+
+    // Strip trailing "Sources" / "References" section added by ChatGPT web-search
+    // responses — everything from the heading/word to end-of-string.
+    out = out.replace(/\n+(?:##?\s+)?(?:Sources|References)(?:\s*\n[\s\S]*)?$/i, '');
+    // Also catch "Sources" at the very end with no preceding newline (edge case)
+    out = out.replace(/\s+(?:Sources|References)\s*$/i, '');
+
+    // Strip ChatGPT citation links that Turndown may have converted to markdown links:
+    // e.g. [Plesk](https://plesk.com/...?utm_source=chatgpt.com)
+    out = out.replace(/\[([^\]]+)\]\([^)]*utm_source=chatgpt\.com[^)]*\)/g, '');
+
+    // Collapse char-spacing artifacts: sequences like "D N S _ P R O B E" (≥4 single
+    // chars each separated by exactly one space) back to the original word.
+    // These come from ChatGPT syntax-highlighting spans that wrap each char individually.
+    out = out.replace(/(?<![\S])((?:[A-Za-z0-9_!@#%^&*()\-+=,.] ){4,}[A-Za-z0-9_!@#%^&*()\-+=,.])(?![\S])/g,
+        m => m.replace(/ /g, ''));
+
+    return out
         // Normalise Windows CRLF → LF
         .replace(/\r\n/g, '\n')
         // Remove HTML comment remnants
