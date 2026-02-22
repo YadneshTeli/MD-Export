@@ -41,7 +41,8 @@
         "https://chatgpt.com/*"
       ],
       "js": [
-        "dist/content_chatgpt.js"
+        "dist/content_chatgpt.js",
+        "dist/overlay.js"
       ],
       "run_at": "document_idle"
     },
@@ -50,7 +51,8 @@
         "https://gemini.google.com/*"
       ],
       "js": [
-        "dist/content_gemini.js"
+        "dist/content_gemini.js",
+        "dist/overlay.js"
       ],
       "run_at": "document_idle"
     },
@@ -60,7 +62,8 @@
         "https://x.com/*"
       ],
       "js": [
-        "dist/content_grok.js"
+        "dist/content_grok.js",
+        "dist/overlay.js"
       ],
       "run_at": "document_idle"
     },
@@ -69,7 +72,8 @@
         "https://claude.ai/*"
       ],
       "js": [
-        "dist/content_claude.js"
+        "dist/content_claude.js",
+        "dist/overlay.js"
       ],
       "run_at": "document_idle"
     }

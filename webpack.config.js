@@ -16,7 +16,7 @@ const resolve = {
   },
 };
 
-// Content scripts bundle
+// Content scripts bundle (per-site scrapers)
 const contentConfig = {
   name: 'content',
   entry: {
@@ -25,6 +25,15 @@ const contentConfig = {
     content_grok: './src/content/grok.js',
     content_claude: './src/content/claude.js',
   },
+  output: { path: path.resolve(__dirname, 'dist'), filename: '[name].js', clean: false },
+  resolve,
+  optimization: { minimize: false },
+};
+
+// Overlay bundle (in-page selection UI, imports all scrapers)
+const overlayConfig = {
+  name: 'overlay',
+  entry: { overlay: './src/content/overlay.js' },
   output: { path: path.resolve(__dirname, 'dist'), filename: '[name].js', clean: false },
   resolve,
   optimization: { minimize: false },
@@ -49,4 +58,4 @@ const popupConfig = {
   ...pluginOptions,
 };
 
-module.exports = [contentConfig, backgroundConfig, popupConfig];
+module.exports = [contentConfig, overlayConfig, backgroundConfig, popupConfig];
