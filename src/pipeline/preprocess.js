@@ -21,13 +21,21 @@ import { htmlToMarkdown, cleanHtml } from '../content/base_scraper.js';
 /**
  * Run the full preprocessing pipeline.
  * @param {object} raw  Raw conversation object from content script
+ * @param {{ from?: number, to?: number }} [range]  Optional 1-indexed inclusive message range
  * @returns {ProcessedConversation}
  */
-export function preprocess(raw) {
+export function preprocess(raw, range = null) {
     const t0 = performance.now();
 
     // Stage 1: Normalize
-    const normalized = stageNormalize(raw);
+    let normalized = stageNormalize(raw);
+
+    // Apply optional range filter (1-indexed, inclusive)
+    if (range) {
+        const from = Math.max(1, range.from || 1) - 1;          // convert to 0-indexed
+        const to = Math.min(normalized.length, range.to || normalized.length);
+        normalized = normalized.slice(from, to);
+    }
 
     // Stage 2-4: Per-message HTML cleaning + conversion + sanitize
     const converted = normalized.map(stageConvertMessage);
@@ -49,6 +57,7 @@ export function preprocess(raw) {
         site: raw.site || 'Unknown',
         exportedAt: new Date().toISOString(),
         processingMs: elapsed,
+        rangeApplied: range ? `msgs ${range.from}–${range.to}` : null,
 
         // Stats
         stats,
@@ -84,10 +93,15 @@ function normalizeRole(role) {
 
 // ─── Stage 2-4: Clean HTML → Markdown → Sanitize ─────────────────────────────
 
+// DOMParser only exists in page/popup contexts, NOT in service workers.
+const hasDOMParser = typeof DOMParser !== 'undefined';
+
 function stageConvertMessage(msg) {
-    // Stage 2: clean HTML (remove buttons, SVGs, tooltips, Grammarly)
     let cleanedHtml = '';
-    if (msg.html) {
+    let markdown = '';
+
+    if (msg.html && hasDOMParser) {
+        // Stage 2: Clean HTML (remove UI noise)
         try {
             const parser = new DOMParser();
             const dom = parser.parseFromString(msg.html, 'text/html');
@@ -96,14 +110,14 @@ function stageConvertMessage(msg) {
         } catch {
             cleanedHtml = msg.html;
         }
-    }
-
-    // Stage 3: Convert to Markdown via Turndown
-    let markdown = '';
-    if (cleanedHtml) {
+        // Stage 3: HTML → GFM Markdown via Turndown
         markdown = htmlToMarkdown(cleanedHtml);
-    } else if (msg.text) {
-        markdown = msg.text;
+    } else if (msg.markdown) {
+        // Pre-converted markdown (overlay sends this)
+        markdown = msg.markdown;
+    } else {
+        // Plain text fallback — overlay text, or service worker context
+        markdown = msg.text || '';
     }
 
     // Stage 4: Sanitize Markdown

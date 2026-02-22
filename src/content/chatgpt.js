@@ -7,7 +7,7 @@
 
 import { cleanHtml, htmlToMarkdown, getPageTitle } from './base_scraper.js';
 
-function scrapeConversation() {
+export function scrapeConversation() {
     const articles = document.querySelectorAll(
         'article[data-testid^="conversation-turn-"]'
     );

@@ -5,7 +5,7 @@
 
 import { cleanHtml, getPageTitle } from './base_scraper.js';
 
-function scrapeConversation() {
+export function scrapeConversation() {
     const messages = [];
 
     // Primary selectors confirmed from Claude docs / community

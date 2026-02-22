@@ -5,7 +5,7 @@
 
 import { cleanHtml, htmlToMarkdown, getPageTitle } from './base_scraper.js';
 
-function scrapeConversation() {
+export function scrapeConversation() {
     const messages = [];
 
     // Strategy 1: data-testid based

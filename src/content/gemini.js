@@ -9,7 +9,7 @@
 
 import { cleanHtml, htmlToMarkdown, getPageTitle } from './base_scraper.js';
 
-function scrapeConversation() {
+export function scrapeConversation() {
     const pairs = document.querySelectorAll('div.conversation-container');
 
     if (!pairs || pairs.length === 0) {
