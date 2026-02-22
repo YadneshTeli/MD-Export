@@ -29,11 +29,15 @@ export function scrapeConversation() {
             });
         });
     } else {
-        // Fallback: aria roles
-        const userMsgs = document.querySelectorAll('[class*="HumanMessage"], [class*="humanMessage"]');
-        const aiMsgs = document.querySelectorAll('[class*="AIMessage"], [class*="assistantMessage"]');
-        userMsgs.forEach(el => messages.push({ role: 'user', html: cleanHtml(el), text: el.textContent.trim() }));
-        aiMsgs.forEach(el => messages.push({ role: 'assistant', html: cleanHtml(el), text: el.textContent.trim() }));
+        // Fallback: combine selectors into a single querySelectorAll so DOM order is preserved
+        const fallbackTurns = document.querySelectorAll(
+            '[class*="HumanMessage"], [class*="humanMessage"], [class*="AIMessage"], [class*="assistantMessage"]'
+        );
+        fallbackTurns.forEach(el => {
+            const cls = el.className.toString().toLowerCase();
+            const role = cls.includes('human') ? 'user' : 'assistant';
+            messages.push({ role, html: cleanHtml(el), text: el.textContent.trim() });
+        });
     }
 
     if (messages.length === 0) return null;

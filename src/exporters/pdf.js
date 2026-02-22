@@ -32,6 +32,90 @@ const MARGIN = 14;
 const CONTENT_W = PAGE_W - MARGIN * 2;
 const BOTTOM_GUARD = 20; // mm of footer reserved
 
+// ─── Inline Markdown Helpers ─────────────────────────────────────────────────
+
+/**
+ * Parse text containing **bold**, *italic*, ***bolditalic***, and `code` markers
+ * into typed run objects. Unmatched text becomes \{ style: 'normal' \}.
+ */
+function parseInlineRuns(text) {
+  const result = [];
+  const re = /\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`/g;
+  let last = 0, m;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) result.push({ style: 'normal', text: text.slice(last, m.index) });
+    if      (m[1]) result.push({ style: 'bolditalic', text: m[1] });
+    else if (m[2]) result.push({ style: 'bold',       text: m[2] });
+    else if (m[3]) result.push({ style: 'italic',     text: m[3] });
+    else if (m[4]) result.push({ style: 'code',       text: m[4] });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) result.push({ style: 'normal', text: text.slice(last) });
+  return result.filter(r => r.text);
+}
+
+function fontForStyle(style) {
+  switch (style) {
+    case 'bold':       return ['helvetica', 'bold'];
+    case 'italic':     return ['helvetica', 'italic'];
+    case 'bolditalic': return ['helvetica', 'bolditalic'];
+    case 'code':       return ['courier',   'normal'];
+    default:           return ['helvetica', 'normal'];
+  }
+}
+
+/**
+ * Render text with inline markdown styling (bold/italic/code), word-wrapping
+ * within maxW. Advances Y.value by total consumed height.
+ */
+function drawInlineRuns(doc, Y, text, x, maxW, size, setColor, baseColor, needsPage) {
+  const LINE_H = size * 0.45;
+  const runs = parseInlineRuns(text);
+  if (!runs.length) { Y.value += LINE_H; return; }
+
+  // Measure a space in the base font
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(size);
+  const spW = doc.getTextWidth(' ');
+
+  // Break runs into word atoms preserving style
+  const atoms = [];
+  for (const run of runs) {
+    for (const w of run.text.split(/\s+/).filter(Boolean))
+      atoms.push({ style: run.style, text: w });
+  }
+  if (!atoms.length) { Y.value += LINE_H; return; }
+
+  let lineAtoms = [], lineW = 0;
+
+  const flushLine = () => {
+    let cx = x;
+    lineAtoms.forEach((a, i) => {
+      const [ff, fs] = fontForStyle(a.style);
+      doc.setFont(ff, fs); doc.setFontSize(size);
+      setColor(a.style === 'code' ? { r: 108, g: 99, b: 255 } : baseColor);
+      doc.text(a.text, cx, Y.value);
+      cx += doc.getTextWidth(a.text) + (i < lineAtoms.length - 1 ? spW : 0);
+    });
+  };
+
+  for (const atom of atoms) {
+    const [ff, fs] = fontForStyle(atom.style);
+    doc.setFont(ff, fs); doc.setFontSize(size);
+    const aw = doc.getTextWidth(atom.text);
+    const gap = lineAtoms.length ? spW : 0;
+    if (lineAtoms.length && lineW + gap + aw > maxW) {
+      flushLine();
+      Y.value += LINE_H;
+      needsPage(LINE_H + 2);
+      lineAtoms = []; lineW = 0;
+    }
+    lineAtoms.push(atom);
+    lineW += (lineAtoms.length > 1 ? spW : 0) + aw;
+  }
+  if (lineAtoms.length) flushLine();
+  Y.value += LINE_H;
+}
+
 // ─── Main Export ─────────────────────────────────────────────────────────────
 
 export async function toPdf(processed) {
@@ -72,6 +156,7 @@ export async function toPdf(processed) {
 
   // ── Cover Header ──────────────────────────────────────────────────────────
 
+  addPageBg(); // draw page background FIRST, then layer header graphics on top
   setColor(colors.headerBg, 'fill');
   doc.rect(0, 0, PAGE_W, 54, 'F');
   setColor(colors.userBar, 'fill'); doc.rect(0, 54, PAGE_W / 2, 2, 'F');
@@ -106,7 +191,6 @@ export async function toPdf(processed) {
   if (stats.codeLanguages.length > 0) drawDot(stats.codeLanguages.join(', '), 'code');
 
   Y.value = 66;
-  addPageBg();
 
   // ── Stats Card ────────────────────────────────────────────────────────────
 
@@ -242,6 +326,15 @@ function renderSegments(doc, Y, segments, x, maxW, setColor, wrapText, needsPage
         break;
       }
 
+      case 'blockquote': {
+        needsPage(7);
+        setColor(colors.botBar, 'fill');
+        doc.rect(x, Y.value - 1, 2, 6, 'F');
+        drawInlineRuns(doc, Y, seg.text, x + 5, maxW - 5, 8.5, setColor,
+          { r: 80, g: 80, b: 90 }, needsPage);
+        break;
+      }
+
       case 'hr': {
         setColor({ r: 210, g: 210, b: 220 }, 'draw');
         doc.setLineWidth(0.2);
@@ -257,98 +350,140 @@ function renderSegments(doc, Y, segments, x, maxW, setColor, wrapText, needsPage
 
       case 'bullet': {
         needsPage(6);
-        const bLines = wrapText(stripInline(seg.text), maxW - 5, 8.5);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-        setColor({ r: 108, g: 99, b: 255 });
+        setColor(colors.botBar);
         doc.text('•', x, Y.value);
-        doc.setFont('helvetica', 'normal');
-        setColor({ r: 26, g: 26, b: 30 });
-        bLines.forEach((l, i) => { doc.text(l, x + 4, Y.value + i * 4.5); });
-        Y.value += bLines.length * 4.5;
+        drawInlineRuns(doc, Y, seg.text, x + 4, maxW - 4, 8.5, setColor,
+          colors.textPrimary, needsPage);
         break;
       }
 
       case 'numbered': {
         needsPage(6);
-        const nLines = wrapText(stripInline(seg.text), maxW - 7, 8.5);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-        setColor({ r: 108, g: 99, b: 255 });
+        setColor(colors.botBar);
         doc.text(`${seg.n}.`, x, Y.value);
-        doc.setFont('helvetica', 'normal');
-        setColor({ r: 26, g: 26, b: 30 });
-        nLines.forEach((l, i) => { doc.text(l, x + 6, Y.value + i * 4.5); });
-        Y.value += nLines.length * 4.5;
+        drawInlineRuns(doc, Y, seg.text, x + 6, maxW - 6, 8.5, setColor,
+          colors.textPrimary, needsPage);
         break;
       }
 
       case 'paragraph': {
         needsPage(6);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
-        setColor({ r: 26, g: 26, b: 30 });
-        wrapText(stripInline(seg.text), maxW, 8.5).forEach(l => {
-          needsPage(5);
-          doc.text(l, x, Y.value);
-          Y.value += 4.5;
-        });
+        drawInlineRuns(doc, Y, seg.text, x, maxW, 8.5, setColor,
+          colors.textPrimary, needsPage);
         break;
       }
 
       case 'code': {
-        const cLines = seg.content.split('\n');
-        const cH = cLines.length * 4 + (seg.lang ? 13 : 8);
-        needsPage(Math.min(cH, PAGE_H * 0.4));
-
-        setColor({ r: 30, g: 30, b: 30 }, 'fill');
-        doc.roundedRect(x, Y.value - 1, maxW, cH, 2, 2, 'F');
-
-        if (seg.lang) {
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(6);
-          setColor({ r: 108, g: 99, b: 255 });
-          doc.text(seg.lang.toUpperCase(), x + 3, Y.value + 4);
-          Y.value += 6;
-        }
-
+        // Expand each source line into visually-wrapped sub-lines
         doc.setFont('courier', 'normal'); doc.setFontSize(7.5);
-        setColor({ r: 212, g: 212, b: 212 });
-        cLines.forEach(cl => {
-          needsPage(5);
-          doc.text(cl.length > 100 ? cl.slice(0, 100) + '…' : (cl || ' '), x + 3, Y.value + 4);
-          Y.value += 4;
-        });
-        Y.value += 5;
+        const rawLines = seg.content.split('\n');
+        const allLines = rawLines.flatMap(l =>
+          l ? doc.splitTextToSize(l, maxW - 8) : ['']);
+
+        const lineH  = 4;
+        const hdrH   = seg.lang ? 8 : 0;
+        const pad    = 5;
+        const blockH = allLines.length * lineH + hdrH + pad;
+
+        if (blockH <= PAGE_H * 0.45) {
+          // ── Small block: draw as a single rounded unit ─────────────────────
+          needsPage(blockH + 4);
+          setColor({ r: 30, g: 30, b: 30 }, 'fill');
+          doc.roundedRect(x, Y.value - 1, maxW, blockH, 2, 2, 'F');
+
+          if (seg.lang) {
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(6);
+            setColor({ r: 108, g: 99, b: 255 });
+            doc.text(seg.lang.toUpperCase(), x + 3, Y.value + 4);
+            Y.value += hdrH;
+          }
+
+          doc.setFont('courier', 'normal'); doc.setFontSize(7.5);
+          setColor({ r: 212, g: 212, b: 212 });
+          allLines.forEach(cl => {
+            doc.text(cl || ' ', x + 3, Y.value + 4);
+            Y.value += lineH;
+          });
+          Y.value += pad;
+
+        } else {
+          // ── Large block: paginate line by line ─────────────────────────────
+          if (seg.lang) {
+            needsPage(hdrH + lineH + 4);
+            setColor({ r: 30, g: 30, b: 30 }, 'fill');
+            doc.roundedRect(x, Y.value - 1, maxW, hdrH + 2, 2, 2, 'F');
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(6);
+            setColor({ r: 108, g: 99, b: 255 });
+            doc.text(seg.lang.toUpperCase(), x + 3, Y.value + 4);
+            Y.value += hdrH;
+          }
+
+          doc.setFont('courier', 'normal'); doc.setFontSize(7.5);
+          allLines.forEach(cl => {
+            needsPage(lineH + 3);
+            setColor({ r: 30, g: 30, b: 30 }, 'fill');
+            doc.rect(x, Y.value - 1, maxW, lineH + 1, 'F');
+            setColor({ r: 212, g: 212, b: 212 });
+            doc.text(cl || ' ', x + 3, Y.value + 3);
+            Y.value += lineH;
+          });
+          Y.value += pad;
+        }
         break;
       }
 
       case 'table': {
         if (!seg.header || !seg.rows) break;
-        const cols = seg.header.length;
-        const colW = Math.min(maxW / cols, 45);
-        const rowH = 6;
+        const cols    = seg.header.length;
+        const colW    = maxW / cols;           // distribute evenly, no hard cap
+        const rowH    = 6;
+        const hdrBg   = { r: 108, g: 99, b: 255 };
+        const rowBgA  = { r: 255, g: 255, b: 255 };
+        const rowBgB  = { r: 240, g: 240, b: 248 };
+        const divider = { r: 200, g: 200, b: 215 };
+
+        // ── Helper: truncate a single cell string so it fits inside colW ──
+        const fitCell = (text) => {
+          doc.setFontSize(6.5);
+          let t = String(text);
+          if (doc.getTextWidth(t) <= colW - 4) return t;
+          while (t.length > 0 && doc.getTextWidth(t + '…') > colW - 4)
+            t = t.slice(0, -1);
+          return t + '…';
+        };
+
+        // ── Helper: draw the header row at current Y ──────────────────────
+        const drawTblHeader = () => {
+          setColor(hdrBg, 'fill');
+          doc.rect(x, Y.value, maxW, rowH, 'F');
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5);
+          setColor({ r: 255, g: 255, b: 255 });
+          seg.header.forEach((h, i) => {
+            doc.text(fitCell(h), x + 2 + i * colW, Y.value + 4);
+          });
+          Y.value += rowH;
+        };
 
         needsPage(rowH + 4);
+        drawTblHeader();
 
-        // Header
-        setColor({ r: 108, g: 99, b: 255 }, 'fill');
-        doc.rect(x, Y.value, maxW, rowH, 'F');
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5);
-        setColor({ r: 255, g: 255, b: 255 });
-        seg.header.forEach((h, i) => {
-          doc.text(String(h).slice(0, 20), x + 2 + i * colW, Y.value + 4);
-        });
-        Y.value += rowH;
-
-        // Rows
+        // ── Data rows ─────────────────────────────────────────────────────
         seg.rows.forEach((row, ri) => {
-          needsPage(rowH);
-          setColor(ri % 2 === 0 ? { r: 255, g: 255, b: 255 } : { r: 240, g: 240, b: 248 }, 'fill');
+          if (needsPage(rowH + 2)) {
+            // Re-draw header on the new page so columns stay legible
+            drawTblHeader();
+          }
+          setColor(ri % 2 === 0 ? rowBgA : rowBgB, 'fill');
           doc.rect(x, Y.value, maxW, rowH, 'F');
-          setColor({ r: 200, g: 200, b: 215 }, 'draw');
+          setColor(divider, 'draw');
           doc.setLineWidth(0.15);
           doc.line(x, Y.value + rowH, x + maxW, Y.value + rowH);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5);
           setColor({ r: 26, g: 26, b: 30 });
           row.forEach((cell, ci) => {
-            doc.text(String(cell).slice(0, 22), x + 2 + ci * colW, Y.value + 4);
+            doc.text(fitCell(cell), x + 2 + ci * colW, Y.value + 4);
           });
           Y.value += rowH;
         });

@@ -239,13 +239,18 @@ export function parseSegments(md) {
         // ── HR
         if (/^---+$/.test(line.trim())) { segs.push({ type: 'hr' }); continue; }
 
-        // ── Bullet list
-        const bullet = line.match(/^([-*+])\s(.+)/);
+        // ── Bullet list  (handles indented items like "  - text")
+        const trimmedLine = line.replace(/^\s+/, '');
+        const bullet = trimmedLine.match(/^([-*+])\s(.+)/);
         if (bullet) { segs.push({ type: 'bullet', text: bullet[2] }); continue; }
 
-        // ── Numbered list
-        const numbered = line.match(/^(\d+)\.\s(.+)/);
+        // ── Numbered list (handles indented items)
+        const numbered = trimmedLine.match(/^(\d+)\.\s(.+)/);
         if (numbered) { segs.push({ type: 'numbered', n: parseInt(numbered[1], 10), text: numbered[2] }); continue; }
+
+        // ── Blockquote
+        const bq = line.match(/^>\s?(.+)/);
+        if (bq) { segs.push({ type: 'blockquote', text: bq[1] }); continue; }
 
         // ── Blank line
         if (line.trim() === '') { segs.push({ type: 'break' }); continue; }
