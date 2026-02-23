@@ -1,17 +1,17 @@
 # MD-Export – AI Chat Exporter
 
-A powerful Chrome extension that exports conversations from popular AI chat platforms to Markdown, DOCX, or PDF formats with full formatting preservation.
+A powerful Chrome extension to export conversations from ChatGPT, Claude, Gemini, and Grok to Markdown, DOCX, or PDF with full formatting preservation.
 
 ## 🌟 Features
 
-- **Multi-Platform Support**: Works with ChatGPT, Claude, Gemini, and Grok
-- **Multiple Export Formats**: 
-  - Markdown (.md) - Clean, readable text format
-  - DOCX (.docx) - Microsoft Word compatible
-  - PDF (.pdf) - Universal document format
-- **Formatting Preservation**: Maintains code blocks, lists, tables, and text styling
-- **One-Click Export**: Simple popup interface for quick exports
-- **Smart Scraping**: Automatically detects and extracts conversation content
+- **Multi-Platform Support**: ChatGPT, Claude, Gemini, Grok
+- **Multiple Export Formats**:
+  - Markdown (.md) – Clean, readable text
+  - DOCX (.docx) – Microsoft Word compatible
+  - PDF (.pdf) – Universal document format
+- **Formatting Preservation**: Code blocks, lists, tables, and text styling
+- **One-Click Export**: Popup interface for quick exports
+- **Smart Scraping**: Auto-detects and extracts conversation content
 
 ## 🎯 Supported Platforms
 
@@ -29,37 +29,34 @@ A powerful Chrome extension that exports conversations from popular AI chat plat
    git clone https://github.com/YadneshTeli/MD-Export.git
    cd MD-Export
    ```
-
 2. Install dependencies:
    ```bash
    npm install
    ```
-
 3. Build the extension:
    ```bash
    npm run build
    ```
-
 4. Load in Chrome:
-   - Open Chrome and navigate to `chrome://extensions/`
-   - Enable "Developer mode" (toggle in top right)
+   - Go to `chrome://extensions/`
+   - Enable "Developer mode"
    - Click "Load unpacked"
    - Select the `MD-Export` folder
 
 ### From Chrome Web Store
 
-*(Coming soon)*
+*Coming soon*
 
 ## 🚀 Usage
 
-1. Navigate to any supported AI chat platform
-2. Open a conversation you want to export
-3. Click the MD-Export extension icon in your browser toolbar
-4. Select your preferred export format:
-   - **Markdown** - For developers and note-taking apps
-   - **DOCX** - For Word, Google Docs, or professional documents
-   - **PDF** - For sharing or archiving
-5. The file will automatically download to your default downloads folder
+1. Open a supported AI chat platform
+2. Open the conversation you want to export
+3. Click the MD-Export extension icon
+4. Choose your export format:
+   - **Markdown** – For developers and note-taking
+   - **DOCX** – For Word, Google Docs, professional docs
+   - **PDF** – For sharing or archiving
+5. The file downloads automatically
 
 ## 🛠️ Development
 
@@ -71,9 +68,8 @@ A powerful Chrome extension that exports conversations from popular AI chat plat
 ### Build Commands
 
 ```bash
-# Development mode with watch
+# Development mode (watch)
 npm run dev
-
 # Production build
 npm run build
 ```
@@ -99,7 +95,7 @@ MD-Export/
 ├── popup/                   # HTML/CSS for popup
 ├── icons/                   # Extension icons
 ├── manifest.json            # Extension manifest
-└── webpack.config.js        # Build configuration
+└── webpack.config.js        # Build config
 ```
 
 ## 🔧 Tech Stack
@@ -107,24 +103,24 @@ MD-Export/
 - **Core**: JavaScript (ES6+)
 - **Build Tool**: Webpack 5
 - **Export Libraries**:
-  - [Turndown](https://github.com/mixmark-io/turndown) - HTML to Markdown conversion
-  - [docx](https://github.com/dolanmiu/docx) - DOCX generation
-  - [jsPDF](https://github.com/parallax/jsPDF) - PDF generation
-  - [html2canvas](https://github.com/niklasvh/html2canvas) - Screenshot rendering
+  - [Turndown](https://github.com/mixmark-io/turndown) – HTML to Markdown
+  - [docx](https://github.com/dolanmiu/docx) – DOCX generation
+  - [jsPDF](https://github.com/parallax/jsPDF) – PDF generation
+  - [html2canvas](https://github.com/niklasvh/html2canvas) – Screenshot rendering
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome! Please submit a Pull Request.
 
 1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
 ## 📝 License
 
-This project is licensed under the MIT License.
+MIT License
 
 ## 🐛 Known Issues
 
@@ -132,7 +128,7 @@ This project is licensed under the MIT License.
 
 ## 💡 Future Enhancements
 
-- Support for additional AI platforms
+- Support for more AI platforms
 - Custom export templates
 - Batch export multiple conversations
 - Cloud sync for exported files
@@ -144,4 +140,4 @@ Project Link: [https://github.com/YadneshTeli/MD-Export](https://github.com/Yadn
 
 ---
 
-⭐ If you find this extension helpful, please consider giving it a star on GitHub!
+⭐ If you find this extension helpful, please give it a star on GitHub!
