@@ -72,11 +72,13 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
     },
     "claude.ai": {
       name: "Claude",
-      msgSelector: '[data-testid="human-turn"],[data-testid="ai-turn"]',
-      roleAttr: "data-testid",
+      // Each turn is wrapped in [data-test-render-count]; user turns contain
+      // [data-testid="user-message"], AI turns contain [data-is-streaming].
+      msgSelector: '[data-test-render-count]',
+      roleAttr: null, // role detected in Claude-specific branch of collectMessages
       contentSelector: {
-        user: '.prose, div[class*="prose"]',
-        assistant: '.prose, div[class*="prose"], div[class*="markdown"]',
+        user: '[data-testid="user-message"]',
+        assistant: '.standard-markdown, .progressive-markdown',
       },
     },
   };
@@ -504,6 +506,11 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
     // because detectRole on the container itself is ambiguous.
     const isGemini = location.hostname.includes('gemini');
 
+    // Claude: each [data-test-render-count] container holds either a user
+    // message ([data-testid="user-message"]) or an AI response ([data-is-streaming]).
+    // AI responses may have multiple .standard-markdown blocks (intro + full response).
+    const isClaude = location.hostname.includes('claude.ai');
+
     nodes.forEach(el => {
       if (isGemini) {
         // ── User sub-element ──────────────────────────────────────────────────
@@ -525,6 +532,41 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
             rawMessages.push({ role: 'assistant', markdown: htmlToMarkdown(html), html, text });
           }
         }
+
+      } else if (isClaude) {
+        // ── User turn ────────────────────────────────────────────────────────
+        const userMsgEl = el.querySelector('[data-testid="user-message"]');
+        if (userMsgEl) {
+          const html = cleanHtml(userMsgEl);
+          const text = userMsgEl.textContent.trim();
+          if (text) rawMessages.push({ role: 'user', markdown: htmlToMarkdown(html), html, text });
+          return;
+        }
+
+        // ── Assistant turn ───────────────────────────────────────────────────
+        // Collect all .standard-markdown / .progressive-markdown blocks, clone
+        // into one wrapper div (avoids Tailwind class names being Turndown-escaped).
+        const streamingEl = el.querySelector('[data-is-streaming]');
+        if (streamingEl) {
+          const mdBlocks = Array.from(
+            streamingEl.querySelectorAll('.standard-markdown, .progressive-markdown')
+          ).filter(b => b.textContent.trim().length > 0);
+
+          let contentEl;
+          if (mdBlocks.length === 0) {
+            contentEl = streamingEl.querySelector('[class*="font-claude-response"]') || streamingEl;
+          } else if (mdBlocks.length === 1) {
+            contentEl = mdBlocks[0];
+          } else {
+            contentEl = document.createElement('div');
+            mdBlocks.forEach(b => contentEl.appendChild(b.cloneNode(true)));
+          }
+
+          const html = cleanHtml(contentEl);
+          const text = contentEl.textContent.trim();
+          if (text) rawMessages.push({ role: 'assistant', markdown: htmlToMarkdown(html), html, text });
+        }
+
       } else {
         const role = detectRole(el);
         const sel = role === 'user' ? contentSel.user : contentSel.assistant;

@@ -1,6 +1,8 @@
 /**
  * markdown.js – Markdown exporter
  * Consumes ProcessedConversation from the preprocessing pipeline.
+ * Uses pure GFM markdown — no inline HTML — for maximum compatibility
+ * across VS Code, GitHub, Obsidian, Typora, and other renderers.
  */
 
 import { stripInline } from '../pipeline/preprocess.js';
@@ -18,22 +20,9 @@ export function toMarkdown(processed) {
     const lines = [];
 
     // ── Header ────────────────────────────────────────────────────────────────
-    lines.push(`<div align="center">`);
-    lines.push(``);
     lines.push(`# ${title}`);
     lines.push(``);
-    lines.push(`**${site} Conversation Export**`);
-    lines.push(``);
-    lines.push(`</div>`);
-    lines.push(``);
-    lines.push(`---`);
-    lines.push(``);
-
-    // ── Table of Contents ─────────────────────────────────────────────────────
-    lines.push(`## Table of Contents`);
-    lines.push(``);
-    lines.push(`- [Overview](#overview)`);
-    lines.push(`- [Messages](#messages)`);
+    lines.push(`> **${site} Conversation Export** · Exported ${date}`);
     lines.push(``);
     lines.push(`---`);
     lines.push(``);
@@ -41,38 +30,17 @@ export function toMarkdown(processed) {
     // ── Overview ──────────────────────────────────────────────────────────────
     lines.push(`## Overview`);
     lines.push(``);
-
-    // Stats visual table
-    lines.push(`<table>`);
-    lines.push(`<tr>`);
-    lines.push(`<td align="center"><b>Total Messages</b></td>`);
-    lines.push(`<td align="center"><b>Your Messages</b></td>`);
-    lines.push(`<td align="center"><b>${site}'s Messages</b></td>`);
-    lines.push(`<td align="center"><b>Total Words</b></td>`);
-    lines.push(`</tr>`);
-    lines.push(`<tr>`);
-    lines.push(`<td align="center">${stats.messageCount}</td>`);
-    lines.push(`<td align="center">${stats.userMessages}</td>`);
-    lines.push(`<td align="center">${stats.assistantMessages}</td>`);
-    lines.push(`<td align="center">${stats.totalWords.toLocaleString()}</td>`);
-    lines.push(`</tr>`);
-    lines.push(`</table>`);
-    lines.push(``);
-
-    // Metadata table
-    lines.push(`| Property | Value |`);
-    lines.push(`|:---------|:------|`);
-    lines.push(`| **Platform** | ${site} |`);
-    lines.push(`| **Exported** | ${date} |`);
-    lines.push(`| **Avg. Words / Message** | ${stats.avgWordsPerMessage} |`);
+    lines.push(`| Stat | Value |`);
+    lines.push(`|:-----|:------|`);
+    lines.push(`| Platform | ${site} |`);
+    lines.push(`| Exported | ${date} |`);
+    lines.push(`| Total Messages | ${stats.messageCount} |`);
+    lines.push(`| Your Messages | ${stats.userMessages} |`);
+    lines.push(`| ${site}'s Messages | ${stats.assistantMessages} |`);
+    lines.push(`| Total Words | ${stats.totalWords.toLocaleString()} |`);
+    lines.push(`| Avg. Words / Message | ${stats.avgWordsPerMessage} |`);
     if (stats.codeLanguages.length > 0) {
-        lines.push(`| **Code Languages** | ${stats.codeLanguages.join(', ')} |`);
-    }
-    if (stats.hasCode) {
-        lines.push(`| **Messages with Code** | ${stats.messagesWithCode} |`);
-    }
-    if (stats.hasTable) {
-        lines.push(`| **Messages with Tables** | ${stats.messagesWithTable} |`);
+        lines.push(`| Code Languages | ${stats.codeLanguages.join(', ')} |`);
     }
     lines.push(``);
     lines.push(`---`);
@@ -87,40 +55,32 @@ export function toMarkdown(processed) {
         const isUser = role === 'user';
         const msgNum = index + 1;
 
-        // Build inline metadata for sub-label
+        // Build inline metadata
         const metaParts = [`${wordCount} words`];
         if (hasCode && codeLanguages.length > 0) metaParts.push(`code: ${codeLanguages.join(', ')}`);
         if (hasTable) metaParts.push(`table`);
 
         const speaker = isUser ? `You` : site;
-        lines.push(`### ${speaker} <sub>#${msgNum} &nbsp;·&nbsp; ${metaParts.join(' · ')}</sub>`);
+        // Pure markdown heading — no HTML tags
+        lines.push(`### ${speaker} — #${msgNum} · ${metaParts.join(' · ')}`);
         lines.push(``);
 
         // Wrap long AI responses in a collapsible block
         if (!isUser && wordCount > 300) {
-            lines.push(`<details>`);
-            lines.push(`<summary>View response (${wordCount} words)</summary>`);
+            lines.push(`> **[${wordCount} words — scroll to read]**`);
             lines.push(``);
-            lines.push(markdown);
-            lines.push(``);
-            lines.push(`</details>`);
-        } else {
-            lines.push(markdown);
         }
 
+        lines.push(markdown);
         lines.push(``);
         lines.push(`---`);
         lines.push(``);
     }
 
     // ── Footer ────────────────────────────────────────────────────────────────
-    lines.push(`<div align="center">`);
-    lines.push(``);
-    lines.push(`*Exported from ${site} &nbsp;·&nbsp; ${date}*`);
+    lines.push(`*Exported from ${site} · ${date}*`);
     lines.push(``);
     lines.push(`*Generated by [MD-Export](https://github.com/YadneshTeli/MD-Export)*`);
-    lines.push(``);
-    lines.push(`</div>`);
 
     return lines.join('\n').trim();
 }

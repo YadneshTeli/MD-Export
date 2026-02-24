@@ -84,6 +84,8 @@ function fontForStyle(style) {
 /**
  * Render text with inline markdown styling (bold/italic/code), word-wrapping
  * within maxW. Advances Y.value by total consumed height.
+ * Handles oversized atoms (e.g., long URLs without spaces) by force-breaking
+ * them character by character if they exceed maxW.
  */
 function drawInlineRuns(doc, Y, text, x, maxW, size, setColor, baseColor, needsPage) {
   const LINE_H = size * 0.45;
@@ -121,6 +123,56 @@ function drawInlineRuns(doc, Y, text, x, maxW, size, setColor, baseColor, needsP
     const [ff, fs] = fontForStyle(atom.style);
     doc.setFont(ff, fs); doc.setFontSize(size);
     const aw = doc.getTextWidth(atom.text);
+
+    // Handle oversized atoms (e.g., long URLs) by breaking them character by character
+    if (aw > maxW) {
+      // If there's anything in the current line, flush it first
+      if (lineAtoms.length) {
+        flushLine();
+        Y.value += LINE_H;
+        needsPage(LINE_H + 2);
+        lineAtoms = []; lineW = 0;
+      }
+
+      // Now break the oversized atom
+      let remainingText = atom.text;
+      while (remainingText.length > 0) {
+        let subAtomText = '';
+        let subAtomWidth = 0;
+        for (let i = 0; i < remainingText.length; i++) {
+          const char = remainingText[i];
+          const charWidth = doc.getTextWidth(char);
+          if (subAtomWidth + charWidth > maxW && i > 0) {
+            // Current char would exceed maxW, and we have at least one char already
+            break;
+          }
+          subAtomText += char;
+          subAtomWidth += charWidth;
+        }
+
+        if (subAtomText.length > 0) {
+          // Render this sub-atom on its own line
+          doc.setFont(ff, fs); doc.setFontSize(size);
+          setColor(atom.style === 'code' ? { r: 108, g: 99, b: 255 } : baseColor);
+          doc.text(subAtomText, x, Y.value);
+          Y.value += LINE_H;
+          needsPage(LINE_H + 2);
+          remainingText = remainingText.substring(subAtomText.length);
+        } else {
+          // This should ideally not happen if maxW > 0, but as a safeguard
+          // If a single character is wider than maxW, it will be rendered anyway
+          doc.setFont(ff, fs); doc.setFontSize(size);
+          setColor(atom.style === 'code' ? { r: 108, g: 99, b: 255 } : baseColor);
+          doc.text(remainingText[0], x, Y.value);
+          Y.value += LINE_H;
+          needsPage(LINE_H + 2);
+          remainingText = remainingText.substring(1);
+        }
+      }
+      continue; // Move to the next original atom
+    }
+
+    // Normal word wrapping logic for atoms that fit or are smaller than maxW
     const gap = lineAtoms.length ? spW : 0;
     if (lineAtoms.length && lineW + gap + aw > maxW) {
       flushLine();
