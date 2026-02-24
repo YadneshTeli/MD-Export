@@ -3,8 +3,11 @@
  * DOM confirmed from actual page HTML:
  * - Full history: div#chat-history > infinite-scroller
  * - Each Q&A pair: div.conversation-container
- * - User query: user-query → .query-text-line (p element)
- * - Model response: structured-content-container → div.markdown.markdown-main-panel
+ *   └── user-query → div.query-text.gds-body-l → p.query-text-line
+ *   └── model-response → structured-content-container → div.markdown.markdown-main-panel
+ *
+ * NOTE: Use querySelector (NOT querySelectorAll) for the markdown panel to
+ * avoid picking up hidden draft panels when Gemini shows multiple responses.
  */
 
 import { cleanHtml, htmlToMarkdown, getPageTitle } from './base_scraper.js';
@@ -20,28 +23,38 @@ export function scrapeConversation() {
 
     pairs.forEach((pair) => {
         // --- User message ---
-        const userQueryLines = pair.querySelectorAll('p.query-text-line, .query-text');
+        // Collect all query-text-line paragraphs (multi-line prompts have multiple <p>s)
+        const userQueryLines = pair.querySelectorAll('p.query-text-line');
         let userText = '';
-        userQueryLines.forEach(el => { userText += el.textContent.trim() + ' '; });
+        userQueryLines.forEach(el => { userText += el.textContent.trim() + '\n'; });
         userText = userText.trim();
 
         if (userText) {
-            messages.push({ role: 'user', html: `<p>${userText}</p>`, text: userText });
+            // Build a simple HTML string so htmlToMarkdown can produce proper markdown.
+            // Providing `markdown` directly avoids the service-worker DOMParser fallback.
+            const userHtml = userText.split('\n').map(l => `<p>${l}</p>`).join('');
+            messages.push({
+                role: 'user',
+                html: userHtml,
+                markdown: userText,   // plain text is valid markdown for user prompts
+                text: userText,
+            });
         }
 
         // --- Model response ---
-        // Primary: div.markdown.markdown-main-panel (confirmed selector)
-        const markdownPanels = pair.querySelectorAll(
+        // Use querySelector (first match only) to avoid scraping hidden draft panels.
+        // Gemini renders multiple drafts as siblings but only one is visible at a time.
+        const panel = pair.querySelector(
             'div.markdown.markdown-main-panel, div[class*="markdown-main-panel"]'
         );
 
-        markdownPanels.forEach(panel => {
+        if (panel) {
             const cleaned = cleanHtml(panel);
             const text = panel.textContent.trim();
             if (text) {
                 messages.push({ role: 'assistant', markdown: htmlToMarkdown(cleaned), html: cleaned, text });
             }
-        });
+        }
     });
 
     return {

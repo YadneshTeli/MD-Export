@@ -21,12 +21,64 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
   // ── Site config map ───────────────────────────────────────────────────────
 
   const SITE_CONFIG = {
-    'chat.openai.com': { name: 'ChatGPT', msgSelector: 'article[data-testid^="conversation-turn-"]', roleAttr: 'data-turn', contentSelector: { user: '.whitespace-pre-wrap', assistant: 'div.markdown.prose, div[class*="markdown prose"], div[class*="markdown"]' } },
-    'chatgpt.com':     { name: 'ChatGPT', msgSelector: 'article[data-testid^="conversation-turn-"]', roleAttr: 'data-turn', contentSelector: { user: '.whitespace-pre-wrap', assistant: 'div.markdown.prose, div[class*="markdown prose"], div[class*="markdown"]' } },
-    'gemini.google.com': { name: 'Gemini', msgSelector: 'div.conversation-container', roleAttr: null, contentSelector: { user: '.query-text-line, .query-text', assistant: 'div.markdown.markdown-main-panel, div[class*="markdown-main-panel"]' } },
-    'grok.com': { name: 'Grok', msgSelector: '[data-testid*="message"],[data-testid*="turn"]', roleAttr: 'data-testid', contentSelector: { user: null, assistant: 'div[class*="message-content"], .prose, div[class*="markdown"]' } },
-    'x.com':    { name: 'Grok', msgSelector: '[data-testid*="message"],[data-testid*="turn"]', roleAttr: 'data-testid', contentSelector: { user: null, assistant: 'div[class*="message-content"], .prose, div[class*="markdown"]' } },
-    'claude.ai': { name: 'Claude', msgSelector: '[data-testid="human-turn"],[data-testid="ai-turn"]', roleAttr: 'data-testid', contentSelector: { user: '.prose, div[class*="prose"]', assistant: '.prose, div[class*="prose"], div[class*="markdown"]' } },
+    "chat.openai.com": {
+      name: "ChatGPT",
+      msgSelector: 'article[data-testid^="conversation-turn-"]',
+      roleAttr: "data-turn",
+      contentSelector: {
+        user: ".whitespace-pre-wrap",
+        assistant:
+          'div.markdown.prose, div[class*="markdown prose"], div[class*="markdown"]',
+      },
+    },
+    "chatgpt.com": {
+      name: "ChatGPT",
+      msgSelector: 'article[data-testid^="conversation-turn-"]',
+      roleAttr: "data-turn",
+      contentSelector: {
+        user: ".whitespace-pre-wrap",
+        assistant:
+          'div.markdown.prose, div[class*="markdown prose"], div[class*="markdown"]',
+      },
+    },
+    "gemini.google.com": {
+      name: "Gemini",
+      msgSelector: "div.conversation-container",
+      roleAttr: null,
+      contentSelector: {
+        user: ".query-text-line, .query-text",
+        assistant:
+          'div.markdown.markdown-main-panel, div[class*="markdown-main-panel"]',
+      },
+    },
+    "grok.com": {
+      name: "Grok",
+      // Each turn has id="response-{uuid}"; items-end = user, items-start = assistant
+      msgSelector: '[id^="response-"]',
+      roleAttr: null, // role detected via items-end / items-start class (see detectRole)
+      contentSelector: {
+        user: '.response-content-markdown',
+        assistant: '.response-content-markdown',
+      },
+    },
+    "x.com": {
+      name: "Grok",
+      msgSelector: '[id^="response-"]',
+      roleAttr: null,
+      contentSelector: {
+        user: '.response-content-markdown',
+        assistant: '.response-content-markdown',
+      },
+    },
+    "claude.ai": {
+      name: "Claude",
+      msgSelector: '[data-testid="human-turn"],[data-testid="ai-turn"]',
+      roleAttr: "data-testid",
+      contentSelector: {
+        user: '.prose, div[class*="prose"]',
+        assistant: '.prose, div[class*="prose"], div[class*="markdown"]',
+      },
+    },
   };
 
   const site = SITE_CONFIG[location.hostname];
@@ -447,18 +499,43 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
     const nodes = document.querySelectorAll(site.msgSelector);
     const contentSel = site.contentSelector || {};
 
+    // Gemini wraps each Q&A turn inside one conversation-container.
+    // We must split it into user + assistant sub-elements explicitly,
+    // because detectRole on the container itself is ambiguous.
+    const isGemini = location.hostname.includes('gemini');
+
     nodes.forEach(el => {
-      const role = detectRole(el);
-      // Target the specific content element (prose/markdown div) where possible
-      // so we scrape just the message body, not surrounding UI controls/buttons.
-      const sel = role === 'user' ? contentSel.user : contentSel.assistant;
-      const contentEl = sel ? (el.querySelector(sel) || el) : el;
+      if (isGemini) {
+        // ── User sub-element ──────────────────────────────────────────────────
+        const userLines = el.querySelectorAll('p.query-text-line');
+        let userText = '';
+        userLines.forEach(p => { userText += p.textContent.trim() + '\n'; });
+        userText = userText.trim();
+        if (userText) {
+          const userHtml = userText.split('\n').map(l => `<p>${l}</p>`).join('');
+          rawMessages.push({ role: 'user', markdown: userText, html: userHtml, text: userText });
+        }
 
-      const html = cleanHtml(contentEl);
-      const markdown = htmlToMarkdown(html);
-      const text = contentEl.textContent.trim();
+        // ── Assistant sub-element (first/visible draft only) ──────────────────
+        const assistantEl = el.querySelector(contentSel.assistant);
+        if (assistantEl) {
+          const html = cleanHtml(assistantEl);
+          const text = assistantEl.textContent.trim();
+          if (text) {
+            rawMessages.push({ role: 'assistant', markdown: htmlToMarkdown(html), html, text });
+          }
+        }
+      } else {
+        const role = detectRole(el);
+        const sel = role === 'user' ? contentSel.user : contentSel.assistant;
+        const contentEl = sel ? (el.querySelector(sel) || el) : el;
 
-      if (text) rawMessages.push({ role, markdown, html, text });
+        const html = cleanHtml(contentEl);
+        const markdown = htmlToMarkdown(html);
+        const text = contentEl.textContent.trim();
+
+        if (text) rawMessages.push({ role, markdown, html, text });
+      }
     });
 
     const totalEl = document.getElementById('mde-total');
@@ -466,6 +543,13 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
   }
 
   function detectRole(el) {
+    // Grok (grok.com / x.com): role is encoded as items-end (user) or items-start (assistant)
+    const isGrok = location.hostname.includes('grok.com') || location.hostname === 'x.com';
+    if (isGrok) {
+      const cls = el.className || '';
+      return cls.includes('items-end') ? 'user' : 'assistant';
+    }
+
     const attr = site.roleAttr ? el.getAttribute(site.roleAttr) || '' : '';
     const cls = el.className || '';
     const text = attr.toLowerCase() + ' ' + cls.toLowerCase();

@@ -23,7 +23,7 @@ _td.addRule('citationPill', {
     filter: node =>
         node.nodeName === 'SPAN' &&
         (node.getAttribute('data-testid') === 'webpage-citation-pill' ||
-         node.getAttribute('data-state') === 'closed'),
+            node.getAttribute('data-state') === 'closed'),
     replacement: () => '',
 });
 
@@ -80,7 +80,7 @@ export function cleanHtml(element) {
         '[data-testid="source-footnote"]',
         '[data-testid="web-browsing-attribution"]',
         '[class*="browsing-attribution"]',
-        'svg', '.sr-only', '[aria-hidden="true"]',
+        'svg', '.sr-only', '.cdk-visually-hidden', '[aria-hidden="true"]',
         'model-thoughts', 'tts-control', 'bard-avatar',
     ];
     noisy.forEach(sel => {

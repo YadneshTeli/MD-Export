@@ -32,6 +32,23 @@ const MARGIN = 14;
 const CONTENT_W = PAGE_W - MARGIN * 2;
 const BOTTOM_GUARD = 20; // mm of footer reserved
 
+/**
+ * Strip emoji and characters outside the Latin Extended-B block (U+0000–U+024F).
+ * jsPDF's built-in Helvetica/Courier fonts are Latin-only – any character
+ * outside that range will either be skipped silently or corrupt the text line.
+ * Replace emoji with a plain-text fallback so the surrounding sentence still renders.
+ */
+function sanitizePdfText(text) {
+  return (text || '')
+    // Replace emoji with nothing (they are decoration; the text still makes sense)
+    .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FEFF}\u{1F300}-\u{1F9FF}]/gu, '')
+    // Strip any remaining characters above Latin Extended-B (U+024F)
+    .replace(/[^\u0000-\u024F\u2010-\u2027\u2030-\u206F]/g, '')
+    // Collapse any double-spaces left behind
+    .replace(/ {2,}/g, ' ')
+    .trim();
+}
+
 // ─── Inline Markdown Helpers ─────────────────────────────────────────────────
 
 /**
@@ -44,10 +61,10 @@ function parseInlineRuns(text) {
   let last = 0, m;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) result.push({ style: 'normal', text: text.slice(last, m.index) });
-    if      (m[1]) result.push({ style: 'bolditalic', text: m[1] });
-    else if (m[2]) result.push({ style: 'bold',       text: m[2] });
-    else if (m[3]) result.push({ style: 'italic',     text: m[3] });
-    else if (m[4]) result.push({ style: 'code',       text: m[4] });
+    if (m[1]) result.push({ style: 'bolditalic', text: m[1] });
+    else if (m[2]) result.push({ style: 'bold', text: m[2] });
+    else if (m[3]) result.push({ style: 'italic', text: m[3] });
+    else if (m[4]) result.push({ style: 'code', text: m[4] });
     last = m.index + m[0].length;
   }
   if (last < text.length) result.push({ style: 'normal', text: text.slice(last) });
@@ -56,11 +73,11 @@ function parseInlineRuns(text) {
 
 function fontForStyle(style) {
   switch (style) {
-    case 'bold':       return ['helvetica', 'bold'];
-    case 'italic':     return ['helvetica', 'italic'];
+    case 'bold': return ['helvetica', 'bold'];
+    case 'italic': return ['helvetica', 'italic'];
     case 'bolditalic': return ['helvetica', 'bolditalic'];
-    case 'code':       return ['courier',   'normal'];
-    default:           return ['helvetica', 'normal'];
+    case 'code': return ['courier', 'normal'];
+    default: return ['helvetica', 'normal'];
   }
 }
 
@@ -80,8 +97,10 @@ function drawInlineRuns(doc, Y, text, x, maxW, size, setColor, baseColor, needsP
   // Break runs into word atoms preserving style
   const atoms = [];
   for (const run of runs) {
-    for (const w of run.text.split(/\s+/).filter(Boolean))
-      atoms.push({ style: run.style, text: w });
+    for (const w of run.text.split(/\s+/).filter(Boolean)) {
+      const clean = sanitizePdfText(w);
+      if (clean) atoms.push({ style: run.style, text: clean });
+    }
   }
   if (!atoms.length) { Y.value += LINE_H; return; }
 
@@ -222,7 +241,7 @@ export async function toPdf(processed) {
     doc.text(`${wordCount} words${hasCode ? '  ·  ' + codeLanguages.join(', ') : ''}`,
       PAGE_W - MARGIN - 2, headerY + 7, { align: 'right' });
 
-    Y.value = headerY + 12;
+    Y.value = headerY + 16;
 
     // Render body segments — Y is mutated in-place through the shared ref
     renderSegments(doc, Y, segments, MARGIN + 5, CONTENT_W - 10,
@@ -232,7 +251,7 @@ export async function toPdf(processed) {
     setColor(colors.divider, 'draw');
     doc.setLineWidth(0.2);
     doc.line(MARGIN, Y.value, PAGE_W - MARGIN, Y.value);
-    Y.value += 6;
+    Y.value += 12;
   }
 
   // ── Footer on every page ──────────────────────────────────────────────────
@@ -372,6 +391,7 @@ function renderSegments(doc, Y, segments, x, maxW, setColor, wrapText, needsPage
         needsPage(6);
         drawInlineRuns(doc, Y, seg.text, x, maxW, 8.5, setColor,
           colors.textPrimary, needsPage);
+        Y.value += 2; // bottom spacing between consecutive paragraphs
         break;
       }
 
@@ -382,9 +402,9 @@ function renderSegments(doc, Y, segments, x, maxW, setColor, wrapText, needsPage
         const allLines = rawLines.flatMap(l =>
           l ? doc.splitTextToSize(l, maxW - 8) : ['']);
 
-        const lineH  = 4;
-        const hdrH   = seg.lang ? 8 : 0;
-        const pad    = 5;
+        const lineH = 4;
+        const hdrH = seg.lang ? 8 : 0;
+        const pad = 5;
         const blockH = allLines.length * lineH + hdrH + pad;
 
         if (blockH <= PAGE_H * 0.45) {
@@ -436,12 +456,12 @@ function renderSegments(doc, Y, segments, x, maxW, setColor, wrapText, needsPage
 
       case 'table': {
         if (!seg.header || !seg.rows) break;
-        const cols    = seg.header.length;
-        const colW    = maxW / cols;           // distribute evenly, no hard cap
-        const rowH    = 6;
-        const hdrBg   = { r: 108, g: 99, b: 255 };
-        const rowBgA  = { r: 255, g: 255, b: 255 };
-        const rowBgB  = { r: 240, g: 240, b: 248 };
+        const cols = seg.header.length;
+        const colW = maxW / cols;           // distribute evenly, no hard cap
+        const rowH = 6;
+        const hdrBg = { r: 108, g: 99, b: 255 };
+        const rowBgA = { r: 255, g: 255, b: 255 };
+        const rowBgB = { r: 240, g: 240, b: 248 };
         const divider = { r: 200, g: 200, b: 215 };
 
         // ── Helper: truncate a single cell string so it fits inside colW ──
