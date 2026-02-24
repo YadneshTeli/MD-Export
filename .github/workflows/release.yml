@@ -1,0 +1,55 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'   # triggers on version tags like v1.0.0
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to create GitHub Releases
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Package extension zip
+        run: |
+          VERSION=${GITHUB_REF_NAME}
+          ZIP_NAME="md-export-${VERSION}.zip"
+          zip -r "$ZIP_NAME" dist/ popup/ icons/ manifest.json
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "MD-Export ${{ env.VERSION }}"
+          body: |
+            ## MD-Export ${{ env.VERSION }}
+
+            ### Installation
+            1. Download `${{ env.ZIP_NAME }}` below
+            2. Unzip it anywhere on your computer
+            3. Open Chrome → `chrome://extensions/`
+            4. Enable **Developer mode** (top-right toggle)
+            5. Click **Load unpacked** → select the unzipped folder
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for what's new.
+          files: ${{ env.ZIP_NAME }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
