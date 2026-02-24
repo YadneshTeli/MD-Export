@@ -1,6 +1,6 @@
 {
     "name": "md-export",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Chrome extension to export AI chat conversations",
     "scripts": {
         "build": "webpack --mode production",

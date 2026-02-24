@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] – 2026-02-24
+
+### Fixed
+
+- **Claude scraper** – Updated DOM selectors for current Claude UI (Feb 2026):
+  replaced deprecated `data-testid="human-turn"` / `data-testid="ai-turn"` with
+  `[data-test-render-count]` turn containers, `[data-testid="user-message"]` for
+  user messages, and `[data-is-streaming]` + `.standard-markdown` for AI responses
+- **Claude multi-block AI messages** – AI responses split across multiple
+  `.standard-markdown` blocks (e.g. intro sentence + full response after a tool-use
+  widget) are now fully captured by cloning all blocks into a single wrapper `<div>`
+  before conversion — prevents Tailwind class names being Turndown-escaped
+- **Claude overlay** – Updated `claude.ai` `SITE_CONFIG` in `overlay.js` with
+  correct selectors; added `isClaude` branch in `collectMessages` (matching Gemini
+  pattern) so the FAB panel correctly lists all Claude messages
+- **Markdown export** – Rewrote `markdown.js` to use pure GFM (no inline HTML);
+  replaced `<div>`, `<table>`, `<sub>`, `&nbsp;` with blockquotes, GFM pipe tables,
+  and plain text — exports now render correctly in VS Code, GitHub, Obsidian, Typora
+- **PDF overflow** – Fixed long URLs / unbreakable strings escaping the page boundary
+  in `pdf.js`; oversized atoms are now force-broken character by character
+  (equivalent to CSS `word-break: break-all`)
+
+---
+
 ## [1.0.0] – 2026-02-24
 
 ### Added
