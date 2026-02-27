@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] – 2026-02-27
+
+### Fixed
+
+- **Gemini code block exports** – Fixed missing language identifiers in Gemini markdown exports by extracting the language label from Gemini's custom DOM structure and injecting `class="language-X"` into the `<code>` container before Markdown conversion.
+- **PDF character encoding** – Fixed an issue where unsupported emojis (e.g. 💻) in markdown headings resulted in garbage characters (`Ø=ßê`) in the PDF by strictly enforcing `sanitizePdfText` down to the `jsPDF` draw layer.
+- **Duplicate PDF language labels** – Prevented Claude and Gemini from rendering their language tag twice in Markdown/PDF outputs by automatically stripping the redundant plain-text paragraph label generated immediately prior to the code fence.
+
+---
+
 ## [1.0.1] – 2026-02-24
 
 ### Fixed

@@ -27,13 +27,25 @@ _td.addRule('citationPill', {
     replacement: () => '',
 });
 
-// Handle code blocks with language classes
+// Handle code blocks with language classes (standard <pre><code> structure)
 _td.addRule('fencedCodeBlock', {
     filter: node => node.nodeName === 'PRE' && node.querySelector('code'),
     replacement: (_, node) => {
         const code = node.querySelector('code');
         const lang = (code.className.match(/language-(\S+)/) || [])[1] || '';
         return `\n\`\`\`${lang}\n${code.textContent.trim()}\n\`\`\`\n`;
+    },
+});
+
+// Fallback: handle any ChatGPT CodeMirror <pre> blocks that weren't pre-processed
+// (e.g. when cleanHtml is not called). The language label is stored in data-lang.
+_td.addRule('chatgptCodeMirrorBlock', {
+    filter: node => node.nodeName === 'PRE' && node.querySelector('.cm-content'),
+    replacement: (_, node) => {
+        const lang = node.getAttribute('data-lang') || '';
+        const content = node.querySelector('.cm-content');
+        const code = content ? content.textContent.trim() : node.textContent.trim();
+        return `\n\`\`\`${lang}\n${code}\n\`\`\`\n`;
     },
 });
 
@@ -56,6 +68,69 @@ export function htmlToMarkdown(html) {
 export function cleanHtml(element) {
     if (!element) return '';
     const clone = element.cloneNode(true);
+
+    // ── Step 0: Convert ChatGPT CodeMirror code blocks to standard <pre><code>.
+    // ChatGPT's new UI (2025/2026) renders code inside a CodeMirror editor:
+    //   <pre>
+    //     <div>  ← header bar containing the language label text
+    //       <div>Python</div>
+    //     </div>
+    //     <div class="cm-editor">
+    //       <div class="cm-scroller">
+    //         <div class="cm-content">  ← actual code as tokenised <span>s
+    //           <span>print</span><span>(</span>...
+    //         </div>
+    //       </div>
+    //     </div>
+    //   </pre>
+    // We convert each such <pre> into <pre><code class="language-X">…</code></pre>
+    // so the existing Turndown fencedCodeBlock rule handles them correctly.
+    clone.querySelectorAll('pre').forEach(pre => {
+        const cmContent = pre.querySelector('.cm-content');
+        if (!cmContent) return; // not a CodeMirror block — skip
+
+        // Extract language: the label <div> appears before the cm-editor wrapper.
+        // It contains just the language name as text, e.g. "Python", "JavaScript".
+        let lang = '';
+        const headerLabel = pre.querySelector('.flex.items-center.text-sm.font-medium') || pre.querySelector('.flex.max-w-\\[75\\%\\]');
+        if (headerLabel) {
+            lang = headerLabel.textContent.trim().toLowerCase().replace(/[^a-z0-9#+.-]/g, '');
+        }
+
+        // Extract plain code text from the CodeMirror content.
+        // Lines are separated by <br> elements inside .cm-content.
+        // Replace each <br> with a newline text node before reading textContent
+        // so that multi-line code blocks preserve their line structure.
+        const cmClone = cmContent.cloneNode(true);
+        cmClone.querySelectorAll('br').forEach(br => {
+            br.replaceWith(document.createTextNode('\n'));
+        });
+        const codeText = cmClone.textContent;
+
+        // Build a replacement <pre><code> node
+        const newPre = document.createElement('pre');
+        const newCode = document.createElement('code');
+        if (lang) newCode.className = `language-${lang}`;
+        newCode.textContent = codeText.trim();
+        newPre.appendChild(newCode);
+        pre.replaceWith(newPre);
+    });
+
+    // ── Step 0.5: Fix Gemini code blocks missing language classes.
+    // Gemini DOM:
+    // <code-block>
+    //   <div class="code-block-decoration ..."><span>Python</span></div>
+    //   ... <pre><code>...
+    clone.querySelectorAll('code-block').forEach(cb => {
+        const headerSpan = cb.querySelector('.code-block-decoration span');
+        const codeEl = cb.querySelector('pre code');
+        if (headerSpan && codeEl) {
+            const lang = headerSpan.textContent.trim().toLowerCase().replace(/[^a-z0-9#+.-]/g, '');
+            if (lang && !codeEl.className.includes('language-')) {
+                codeEl.classList.add(`language-${lang}`);
+            }
+        }
+    });
 
     // ── Step 1: Remove ChatGPT citation pills.
     // Structure: <span data-state="closed">

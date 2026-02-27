@@ -369,7 +369,7 @@ function renderSegments(doc, Y, segments, x, maxW, setColor, wrapText, needsPage
         needsPage(10);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
         setColor({ r: 15, g: 17, b: 23 });
-        wrapText(stripInline(seg.text), maxW, 13).forEach(l => {
+        wrapText(sanitizePdfText(stripInline(seg.text)), maxW, 13).forEach(l => {
           doc.text(l, x, Y.value); Y.value += 6.5;
         });
         Y.value += 1;
@@ -380,7 +380,7 @@ function renderSegments(doc, Y, segments, x, maxW, setColor, wrapText, needsPage
         needsPage(9);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
         setColor({ r: 15, g: 17, b: 23 });
-        wrapText(stripInline(seg.text), maxW, 11).forEach(l => {
+        wrapText(sanitizePdfText(stripInline(seg.text)), maxW, 11).forEach(l => {
           doc.text(l, x, Y.value); Y.value += 5.5;
         });
         Y.value += 1;
@@ -391,7 +391,7 @@ function renderSegments(doc, Y, segments, x, maxW, setColor, wrapText, needsPage
         needsPage(8);
         doc.setFont('helvetica', 'bolditalic'); doc.setFontSize(9.5);
         setColor({ r: 108, g: 99, b: 255 });
-        wrapText(stripInline(seg.text), maxW, 9.5).forEach(l => {
+        wrapText(sanitizePdfText(stripInline(seg.text)), maxW, 9.5).forEach(l => {
           doc.text(l, x, Y.value); Y.value += 5;
         });
         break;
@@ -452,7 +452,7 @@ function renderSegments(doc, Y, segments, x, maxW, setColor, wrapText, needsPage
         doc.setFont('courier', 'normal'); doc.setFontSize(7.5);
         const rawLines = seg.content.split('\n');
         const allLines = rawLines.flatMap(l =>
-          l ? doc.splitTextToSize(l, maxW - 8) : ['']);
+          l ? doc.splitTextToSize(sanitizePdfText(l), maxW - 8) : ['']);
 
         const lineH = 4;
         const hdrH = seg.lang ? 8 : 0;
@@ -519,7 +519,7 @@ function renderSegments(doc, Y, segments, x, maxW, setColor, wrapText, needsPage
         // ── Helper: truncate a single cell string so it fits inside colW ──
         const fitCell = (text) => {
           doc.setFontSize(6.5);
-          let t = String(text);
+          let t = sanitizePdfText(String(text));
           if (doc.getTextWidth(t) <= colW - 4) return t;
           while (t.length > 0 && doc.getTextWidth(t + '…') > colW - 4)
             t = t.slice(0, -1);
