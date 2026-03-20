@@ -23,7 +23,7 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
   const SITE_CONFIG = {
     "chat.openai.com": {
       name: "ChatGPT",
-      msgSelector: 'article[data-testid^="conversation-turn-"]',
+      msgSelector: 'section[data-testid^="conversation-turn-"], article[data-testid^="conversation-turn-"]',
       roleAttr: "data-turn",
       contentSelector: {
         user: ".whitespace-pre-wrap",
@@ -33,7 +33,7 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
     },
     "chatgpt.com": {
       name: "ChatGPT",
-      msgSelector: 'article[data-testid^="conversation-turn-"]',
+      msgSelector: 'section[data-testid^="conversation-turn-"], article[data-testid^="conversation-turn-"]',
       roleAttr: "data-turn",
       contentSelector: {
         user: ".whitespace-pre-wrap",
@@ -146,6 +146,7 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
         transition: opacity 0.2s;
       }
       article:hover .mde-msg-bar,
+      section:hover .mde-msg-bar,
       [data-testid]:hover .mde-msg-bar,
       div.conversation-container:hover .mde-msg-bar {
         opacity: 1;

@@ -1,6 +1,6 @@
 /**
  * chatgpt.js – ChatGPT conversation scraper
- * DOM: article[data-testid^="conversation-turn-"] with data-turn="user"|"assistant"
+ * DOM: section[data-testid^="conversation-turn-"] (or article) with data-turn="user"|"assistant"
  * User text: div.whitespace-pre-wrap
  * Assistant: div.markdown.prose
  */
@@ -8,8 +8,10 @@
 import { cleanHtml, htmlToMarkdown, getPageTitle } from './base_scraper.js';
 
 export function scrapeConversation() {
+    // ChatGPT changed from <article> to <section> in mid-2025.
+    // Match both for forward/backward compatibility.
     const articles = document.querySelectorAll(
-        'article[data-testid^="conversation-turn-"]'
+        'section[data-testid^="conversation-turn-"], article[data-testid^="conversation-turn-"]'
     );
 
     if (!articles || articles.length === 0) {

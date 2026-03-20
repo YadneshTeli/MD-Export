@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.3] – 2026-03-20
+
+### Fixed
+
+- **ChatGPT scraper not detecting messages** – ChatGPT changed their DOM from `<article>` to `<section>` elements for conversation turns. Updated selectors in both `chatgpt.js` and `overlay.js` (`SITE_CONFIG.msgSelector`) to match `section[data-testid^="conversation-turn-"]` with `article` fallback for backward compatibility.
+- **Overlay per-message buttons not visible on hover** – Added `section:hover .mde-msg-bar` CSS rule alongside the existing `article:hover` rule so export buttons appear on ChatGPT's new DOM structure.
+
+---
+
 ## [1.0.2] – 2026-02-27
 
 ### Fixed
