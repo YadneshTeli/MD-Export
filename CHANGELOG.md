@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Unit test suite** – Added Vitest with 39 tests covering `parseSegments()` and `stripInline()` in the preprocessing pipeline. Run with `npm test`.
+- **ESLint + Prettier** – Added linting (`npm run lint`) and formatting (`npm run format`) tooling with configs tailored for the Chrome extension environment.
+
+### Changed
+
+- **README version badge** – Updated from `1.0.0` to `1.0.3` to match `package.json` and `manifest.json`.
+- **`.gitignore` hardened** – Added `coverage/`, `*.map`, `.gemini/`, and additional OS/editor entries.
+
+### Removed
+
+- **Unused `html2canvas` dependency** – Was listed in `dependencies` but never imported anywhere in the codebase; removed to reduce install size.
+
+---
+
+
 ## [1.0.3] – 2026-03-20
 
 ### Fixed
