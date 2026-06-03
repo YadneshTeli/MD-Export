@@ -5,13 +5,19 @@ node_modules/
 dist/
 *.zip
 
+# Test / Coverage
+coverage/
+
 # OS specific
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # Logs
 *.log
@@ -20,3 +26,9 @@ npm-debug.log*
 # Environment variables
 .env
 .env.local
+
+# Source maps
+*.map
+
+# AI / Agent
+.gemini/
