@@ -62,6 +62,12 @@ Provide these exact descriptions in the console's permission justification texta
     *   *Justification:* "Needed to store the user's preferred default export settings (such as default format) locally on the device."
 *   **`clipboardWrite`**:
     *   *Justification:* "Needed to write the generated Markdown string directly to the system clipboard when the user clicks 'Copy as Markdown'."
+*   **`Host permissions` (chat.openai.com, chatgpt.com, gemini.google.com, grok.com, x.com, claude.ai)**:
+    *   *Justification:* "Needed to access the DOM of the active chat interfaces on these specific platforms to scrape and extract the conversation turns."
+
+### Remote Code Declaration
+*   **Are you using remote code?**: Select **"No, I am not using remote code"**.
+    *   *Why:* Under Manifest V3 policies, extensions are not allowed to load remote code. MD-Export bundles all libraries (jsPDF, docx, Turndown) locally in the package.
 
 ### Privacy Declarations / User Data
 *   **Data Usage**: Select **"No"** to "Does this extension collect or transmit user data?"
