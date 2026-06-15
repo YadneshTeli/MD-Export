@@ -34,9 +34,12 @@ async function handleExport({ format, conversationData }) {
     // Run the preprocessing pipeline
     const processed = preprocess(conversationData);
 
-    const safeTitle = (processed.title || 'chat')
-        .replace(/[^a-z0-9\s\-]/gi, '').trim()
-        .replace(/\s+/g, '_').slice(0, 60) || 'chat_export';
+    const safeTitle =
+        (processed.title || 'chat')
+            .replace(/[^a-z0-9\s-]/gi, '')
+            .trim()
+            .replace(/\s+/g, '_')
+            .slice(0, 60) || 'chat_export';
     const date = new Date().toISOString().slice(0, 10);
     const base = `${processed.site}_${safeTitle}_${date}`;
 
@@ -49,7 +52,10 @@ async function handleExport({ format, conversationData }) {
 
     if (format === 'docx') {
         const blob = await toDocx(processed);
-        const dataUrl = await blobToDataUrl(blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        const dataUrl = await blobToDataUrl(
+            blob,
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        );
         await swDownload(dataUrl, `${base}.docx`);
         return { success: true, filename: `${base}.docx` };
     }

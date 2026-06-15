@@ -16,88 +16,85 @@
 import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
 
 (function mdeOverlayInit() {
-  'use strict';
+    'use strict';
 
-  // ── Site config map ───────────────────────────────────────────────────────
+    // ── Site config map ───────────────────────────────────────────────────────
 
-  const SITE_CONFIG = {
-    "chat.openai.com": {
-      name: "ChatGPT",
-      msgSelector: 'section[data-testid^="conversation-turn-"], article[data-testid^="conversation-turn-"]',
-      roleAttr: "data-turn",
-      contentSelector: {
-        user: ".whitespace-pre-wrap",
-        assistant:
-          'div.markdown.prose, div[class*="markdown prose"], div[class*="markdown"]',
-      },
-    },
-    "chatgpt.com": {
-      name: "ChatGPT",
-      msgSelector: 'section[data-testid^="conversation-turn-"], article[data-testid^="conversation-turn-"]',
-      roleAttr: "data-turn",
-      contentSelector: {
-        user: ".whitespace-pre-wrap",
-        assistant:
-          'div.markdown.prose, div[class*="markdown prose"], div[class*="markdown"]',
-      },
-    },
-    "gemini.google.com": {
-      name: "Gemini",
-      msgSelector: "div.conversation-container",
-      roleAttr: null,
-      contentSelector: {
-        user: ".query-text-line, .query-text",
-        assistant:
-          'div.markdown.markdown-main-panel, div[class*="markdown-main-panel"]',
-      },
-    },
-    "grok.com": {
-      name: "Grok",
-      // Each turn has id="response-{uuid}"; items-end = user, items-start = assistant
-      msgSelector: '[id^="response-"]',
-      roleAttr: null, // role detected via items-end / items-start class (see detectRole)
-      contentSelector: {
-        user: '.response-content-markdown',
-        assistant: '.response-content-markdown',
-      },
-    },
-    "x.com": {
-      name: "Grok",
-      msgSelector: '[id^="response-"]',
-      roleAttr: null,
-      contentSelector: {
-        user: '.response-content-markdown',
-        assistant: '.response-content-markdown',
-      },
-    },
-    "claude.ai": {
-      name: "Claude",
-      // Each turn is wrapped in [data-test-render-count]; user turns contain
-      // [data-testid="user-message"], AI turns contain [data-is-streaming].
-      msgSelector: '[data-test-render-count]',
-      roleAttr: null, // role detected in Claude-specific branch of collectMessages
-      contentSelector: {
-        user: '[data-testid="user-message"]',
-        assistant: '.standard-markdown, .progressive-markdown',
-      },
-    },
-  };
+    const SITE_CONFIG = {
+        'chat.openai.com': {
+            name: 'ChatGPT',
+            msgSelector: 'section[data-testid^="conversation-turn-"], article[data-testid^="conversation-turn-"]',
+            roleAttr: 'data-turn',
+            contentSelector: {
+                user: '.whitespace-pre-wrap',
+                assistant: 'div.markdown.prose, div[class*="markdown prose"], div[class*="markdown"]',
+            },
+        },
+        'chatgpt.com': {
+            name: 'ChatGPT',
+            msgSelector: 'section[data-testid^="conversation-turn-"], article[data-testid^="conversation-turn-"]',
+            roleAttr: 'data-turn',
+            contentSelector: {
+                user: '.whitespace-pre-wrap',
+                assistant: 'div.markdown.prose, div[class*="markdown prose"], div[class*="markdown"]',
+            },
+        },
+        'gemini.google.com': {
+            name: 'Gemini',
+            msgSelector: 'div.conversation-container',
+            roleAttr: null,
+            contentSelector: {
+                user: '.query-text-line, .query-text',
+                assistant: 'div.markdown.markdown-main-panel, div[class*="markdown-main-panel"]',
+            },
+        },
+        'grok.com': {
+            name: 'Grok',
+            // Each turn has id="response-{uuid}"; items-end = user, items-start = assistant
+            msgSelector: '[id^="response-"]',
+            roleAttr: null, // role detected via items-end / items-start class (see detectRole)
+            contentSelector: {
+                user: '.response-content-markdown',
+                assistant: '.response-content-markdown',
+            },
+        },
+        'x.com': {
+            name: 'Grok',
+            msgSelector: '[id^="response-"]',
+            roleAttr: null,
+            contentSelector: {
+                user: '.response-content-markdown',
+                assistant: '.response-content-markdown',
+            },
+        },
+        'claude.ai': {
+            name: 'Claude',
+            // Each turn is wrapped in [data-test-render-count]; user turns contain
+            // [data-testid="user-message"], AI turns contain [data-is-streaming].
+            msgSelector: '[data-test-render-count]',
+            roleAttr: null, // role detected in Claude-specific branch of collectMessages
+            contentSelector: {
+                user: '[data-testid="user-message"]',
+                assistant: '.standard-markdown, .progressive-markdown',
+            },
+        },
+    };
 
-  const site = SITE_CONFIG[location.hostname];
-  if (!site) return; // not a supported page
+    const site = SITE_CONFIG[location.hostname];
+    if (!site) return; // not a supported page
 
-  // ── State ─────────────────────────────────────────────────────────────────
+    // ── State ─────────────────────────────────────────────────────────────────
 
-  let panelOpen = false;
-  let selectedFormat = 'md';
-  let rawMessages = [];     // { role, text, html } from DOM
-  let selectedIndices = new Set();
+    let panelOpen = false;
+    let selectedFormat = 'md';
+    let rawMessages = []; // { role, text, html } from DOM
+    let selectedIndices = new Set();
 
-  const MDE_BTN_ATTR = 'data-mde-injected'; // prevent double-injection
+    const MDE_BTN_ATTR = 'data-mde-injected'; // prevent double-injection
 
-  // ── CSS ───────────────────────────────────────────────────────────────────
+    // ── CSS ───────────────────────────────────────────────────────────────────
 
-  const CSS = `
+    const CSS = `
       :root {
         --mde-accent:  #6C63FF;
         --mde-blue:    #3B82F6;
@@ -334,28 +331,28 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
       #mde-status.mde-err { color: var(--mde-err); }
     `;
 
-  // ── Inject styles ─────────────────────────────────────────────────────────
+    // ── Inject styles ─────────────────────────────────────────────────────────
 
-  function injectStyles() {
-    if (document.getElementById('mde-css')) return;
-    const s = document.createElement('style');
-    s.id = 'mde-css';
-    s.textContent = CSS;
-    (document.head || document.documentElement).appendChild(s);
-  }
+    function injectStyles() {
+        if (document.getElementById('mde-css')) return;
+        const s = document.createElement('style');
+        s.id = 'mde-css';
+        s.textContent = CSS;
+        (document.head || document.documentElement).appendChild(s);
+    }
 
-  // ── Build the slide-in panel once ─────────────────────────────────────────
+    // ── Build the slide-in panel once ─────────────────────────────────────────
 
-  function buildPanel() {
-    if (document.getElementById('mde-panel')) return;
+    function buildPanel() {
+        if (document.getElementById('mde-panel')) return;
 
-    const scrim = document.createElement('div');
-    scrim.id = 'mde-scrim';
-    scrim.onclick = closePanel;
+        const scrim = document.createElement('div');
+        scrim.id = 'mde-scrim';
+        scrim.onclick = closePanel;
 
-    const panel = document.createElement('div');
-    panel.id = 'mde-panel';
-    panel.innerHTML = `
+        const panel = document.createElement('div');
+        panel.id = 'mde-panel';
+        panel.innerHTML = `
           <div id="mde-hdr">
             <div id="mde-hdr-left">
               <div id="mde-hdr-title">↓ MD-Export</div>
@@ -391,55 +388,55 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
           </div>
         `;
 
-    document.body.appendChild(scrim);
-    document.body.appendChild(panel);
+        document.body.appendChild(scrim);
+        document.body.appendChild(panel);
 
-    // Wire events
-    panel.querySelector('#mde-close-btn').onclick = closePanel;
+        // Wire events
+        panel.querySelector('#mde-close-btn').onclick = closePanel;
 
-    panel.querySelectorAll('.mde-chip').forEach(c => {
-      c.onclick = () => applyChip(c.dataset.sel);
-    });
-    panel.querySelectorAll('.mde-fmt').forEach(b => {
-      b.onclick = () => {
-        panel.querySelectorAll('.mde-fmt').forEach(x => x.classList.remove('mde-active'));
-        b.classList.add('mde-active');
-        selectedFormat = b.dataset.fmt;
-      };
-    });
-    panel.querySelector('#mde-export-btn').onclick = doExport;
-  }
+        panel.querySelectorAll('.mde-chip').forEach(c => {
+            c.onclick = () => applyChip(c.dataset.sel);
+        });
+        panel.querySelectorAll('.mde-fmt').forEach(b => {
+            b.onclick = () => {
+                panel.querySelectorAll('.mde-fmt').forEach(x => x.classList.remove('mde-active'));
+                b.classList.add('mde-active');
+                selectedFormat = b.dataset.fmt;
+            };
+        });
+        panel.querySelector('#mde-export-btn').onclick = doExport;
+    }
 
-  // ── Build or re-inject the FAB ────────────────────────────────────────────
+    // ── Build or re-inject the FAB ────────────────────────────────────────────
 
-  function ensureFAB() {
-    if (document.getElementById('mde-fab')) return;
+    function ensureFAB() {
+        if (document.getElementById('mde-fab')) return;
 
-    const fab = document.createElement('button');
-    fab.id = 'mde-fab';
-    fab.title = 'MD-Export – select & export messages';
-    fab.innerHTML = `
+        const fab = document.createElement('button');
+        fab.id = 'mde-fab';
+        fab.title = 'MD-Export – select & export messages';
+        fab.innerHTML = `
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <path d="M8 1v10M8 11l-3-3M8 11l3-3M2 14h12"
               stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           Export Chat
         `;
-    fab.onclick = () => openPanel(null);
-    document.body.appendChild(fab);
-  }
+        fab.onclick = () => openPanel(null);
+        document.body.appendChild(fab);
+    }
 
-  // ── Inject per-message export buttons ────────────────────────────────────
+    // ── Inject per-message export buttons ────────────────────────────────────
 
-  function injectMsgButtons() {
-    const nodes = document.querySelectorAll(site.msgSelector);
-    nodes.forEach((el, idx) => {
-      if (el.hasAttribute(MDE_BTN_ATTR)) return;
-      el.setAttribute(MDE_BTN_ATTR, '1');
+    function injectMsgButtons() {
+        const nodes = document.querySelectorAll(site.msgSelector);
+        nodes.forEach((el, idx) => {
+            if (el.hasAttribute(MDE_BTN_ATTR)) return;
+            el.setAttribute(MDE_BTN_ATTR, '1');
 
-      const bar = document.createElement('div');
-      bar.className = 'mde-msg-bar';
-      bar.innerHTML = `
+            const bar = document.createElement('div');
+            bar.className = 'mde-msg-bar';
+            bar.innerHTML = `
               <button class="mde-msg-btn" title="Export from this message">
                 <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
                   <path d="M8 1v9M8 10l-3-3M8 10l3-3M2 15h12"
@@ -449,181 +446,183 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
               </button>
             `;
 
-      bar.querySelector('.mde-msg-btn').onclick = (e) => {
-        e.stopPropagation();
-        openPanel(idx);  // open panel with this message pre-selected
-      };
+            bar.querySelector('.mde-msg-btn').onclick = e => {
+                e.stopPropagation();
+                openPanel(idx); // open panel with this message pre-selected
+            };
 
-      // Append the bar at the bottom of the message container
-      el.appendChild(bar);
-    });
-  }
-
-  // ── Panel open / close ────────────────────────────────────────────────────
-
-  function openPanel(fromIdx) {
-    if (panelOpen) return;
-    panelOpen = true;
-
-    buildPanel(); // ensure panel exists
-    collectMessages();
-
-    // Pre-select logic
-    if (fromIdx !== null && fromIdx >= 0 && fromIdx < rawMessages.length) {
-      // Select from this message to end (export "from here onwards")
-      selectedIndices = new Set(
-        [...Array(rawMessages.length).keys()].filter(i => i >= fromIdx)
-      );
-      // Deactivate chips since this is a custom range
-    } else {
-      selectedIndices = new Set([...Array(rawMessages.length).keys()]);
+            // Append the bar at the bottom of the message container
+            el.appendChild(bar);
+        });
     }
 
-    renderList();
-    setStatus('', rawMessages.length + ' messages ready');
+    // ── Panel open / close ────────────────────────────────────────────────────
 
-    document.getElementById('mde-scrim').classList.add('mde-visible');
-    document.getElementById('mde-panel').classList.add('mde-open');
-    document.getElementById('mde-fab').style.opacity = '0';
-  }
+    function openPanel(fromIdx) {
+        if (panelOpen) return;
+        panelOpen = true;
 
-  function closePanel() {
-    panelOpen = false;
-    document.getElementById('mde-scrim')?.classList.remove('mde-visible');
-    document.getElementById('mde-panel')?.classList.remove('mde-open');
-    const fab = document.getElementById('mde-fab');
-    if (fab) fab.style.opacity = '1';
-  }
+        buildPanel(); // ensure panel exists
+        collectMessages();
 
-  // ── Message scraping (from DOM, no import needed) ─────────────────────────
-
-  function collectMessages() {
-    rawMessages = [];
-    const nodes = document.querySelectorAll(site.msgSelector);
-    const contentSel = site.contentSelector || {};
-
-    // Gemini wraps each Q&A turn inside one conversation-container.
-    // We must split it into user + assistant sub-elements explicitly,
-    // because detectRole on the container itself is ambiguous.
-    const isGemini = location.hostname.includes('gemini');
-
-    // Claude: each [data-test-render-count] container holds either a user
-    // message ([data-testid="user-message"]) or an AI response ([data-is-streaming]).
-    // AI responses may have multiple .standard-markdown blocks (intro + full response).
-    const isClaude = location.hostname.includes('claude.ai');
-
-    nodes.forEach(el => {
-      if (isGemini) {
-        // ── User sub-element ──────────────────────────────────────────────────
-        const userLines = el.querySelectorAll('p.query-text-line');
-        let userText = '';
-        userLines.forEach(p => { userText += p.textContent.trim() + '\n'; });
-        userText = userText.trim();
-        if (userText) {
-          const userHtml = userText.split('\n').map(l => `<p>${l}</p>`).join('');
-          rawMessages.push({ role: 'user', markdown: userText, html: userHtml, text: userText });
+        // Pre-select logic
+        if (fromIdx !== null && fromIdx >= 0 && fromIdx < rawMessages.length) {
+            // Select from this message to end (export "from here onwards")
+            selectedIndices = new Set([...Array(rawMessages.length).keys()].filter(i => i >= fromIdx));
+            // Deactivate chips since this is a custom range
+        } else {
+            selectedIndices = new Set([...Array(rawMessages.length).keys()]);
         }
 
-        // ── Assistant sub-element (first/visible draft only) ──────────────────
-        const assistantEl = el.querySelector(contentSel.assistant);
-        if (assistantEl) {
-          const html = cleanHtml(assistantEl);
-          const text = assistantEl.textContent.trim();
-          if (text) {
-            rawMessages.push({ role: 'assistant', markdown: htmlToMarkdown(html), html, text });
-          }
-        }
+        renderList();
+        setStatus('', rawMessages.length + ' messages ready');
 
-      } else if (isClaude) {
-        // ── User turn ────────────────────────────────────────────────────────
-        const userMsgEl = el.querySelector('[data-testid="user-message"]');
-        if (userMsgEl) {
-          const html = cleanHtml(userMsgEl);
-          const text = userMsgEl.textContent.trim();
-          if (text) rawMessages.push({ role: 'user', markdown: htmlToMarkdown(html), html, text });
-          return;
-        }
-
-        // ── Assistant turn ───────────────────────────────────────────────────
-        // Collect all .standard-markdown / .progressive-markdown blocks, clone
-        // into one wrapper div (avoids Tailwind class names being Turndown-escaped).
-        const streamingEl = el.querySelector('[data-is-streaming]');
-        if (streamingEl) {
-          const mdBlocks = Array.from(
-            streamingEl.querySelectorAll('.standard-markdown, .progressive-markdown')
-          ).filter(b => b.textContent.trim().length > 0);
-
-          let contentEl;
-          if (mdBlocks.length === 0) {
-            contentEl = streamingEl.querySelector('[class*="font-claude-response"]') || streamingEl;
-          } else if (mdBlocks.length === 1) {
-            contentEl = mdBlocks[0];
-          } else {
-            contentEl = document.createElement('div');
-            mdBlocks.forEach(b => contentEl.appendChild(b.cloneNode(true)));
-          }
-
-          const html = cleanHtml(contentEl);
-          const text = contentEl.textContent.trim();
-          if (text) rawMessages.push({ role: 'assistant', markdown: htmlToMarkdown(html), html, text });
-        }
-
-      } else {
-        const role = detectRole(el);
-        const sel = role === 'user' ? contentSel.user : contentSel.assistant;
-        const contentEl = sel ? (el.querySelector(sel) || el) : el;
-
-        const html = cleanHtml(contentEl);
-        const markdown = htmlToMarkdown(html);
-        const text = contentEl.textContent.trim();
-
-        if (text) rawMessages.push({ role, markdown, html, text });
-      }
-    });
-
-    const totalEl = document.getElementById('mde-total');
-    if (totalEl) totalEl.textContent = rawMessages.length;
-  }
-
-  function detectRole(el) {
-    // Grok (grok.com / x.com): role is encoded as items-end (user) or items-start (assistant)
-    const isGrok = location.hostname.includes('grok.com') || location.hostname === 'x.com';
-    if (isGrok) {
-      const cls = el.className || '';
-      return cls.includes('items-end') ? 'user' : 'assistant';
+        document.getElementById('mde-scrim').classList.add('mde-visible');
+        document.getElementById('mde-panel').classList.add('mde-open');
+        document.getElementById('mde-fab').style.opacity = '0';
     }
 
-    const attr = site.roleAttr ? el.getAttribute(site.roleAttr) || '' : '';
-    const cls = el.className || '';
-    const text = attr.toLowerCase() + ' ' + cls.toLowerCase();
-    if (text.includes('user') || text.includes('human')) return 'user';
-    // Gemini: first child in conversation-container is user
-    if (location.hostname.includes('gemini')) {
-      const idx = Array.from(el.parentElement?.children || []).indexOf(el);
-      return idx % 2 === 0 ? 'user' : 'assistant';
-    }
-    return 'assistant';
-  }
-
-  // ── Render message checklist ──────────────────────────────────────────────
-
-  function renderList() {
-    const list = document.getElementById('mde-list');
-    if (!list) return;
-    if (!rawMessages.length) {
-      list.innerHTML = '<div style="padding:24px;text-align:center;color:#3B3E52;font-size:12px">No messages found</div>';
-      return;
+    function closePanel() {
+        panelOpen = false;
+        document.getElementById('mde-scrim')?.classList.remove('mde-visible');
+        document.getElementById('mde-panel')?.classList.remove('mde-open');
+        const fab = document.getElementById('mde-fab');
+        if (fab) fab.style.opacity = '1';
     }
 
-    list.innerHTML = '';
-    rawMessages.forEach((msg, i) => {
-      const isUser = msg.role === 'user';
-      const row = document.createElement('div');
-      row.className = `mde-row${selectedIndices.has(i) ? ' mde-sel' : ''}`;
-      row.dataset.i = i;
+    // ── Message scraping (from DOM, no import needed) ─────────────────────────
 
-      const preview = msg.text.slice(0, 80) + (msg.text.length > 80 ? '…' : '');
-      row.innerHTML = `
+    function collectMessages() {
+        rawMessages = [];
+        const nodes = document.querySelectorAll(site.msgSelector);
+        const contentSel = site.contentSelector || {};
+
+        // Gemini wraps each Q&A turn inside one conversation-container.
+        // We must split it into user + assistant sub-elements explicitly,
+        // because detectRole on the container itself is ambiguous.
+        const isGemini = location.hostname.includes('gemini');
+
+        // Claude: each [data-test-render-count] container holds either a user
+        // message ([data-testid="user-message"]) or an AI response ([data-is-streaming]).
+        // AI responses may have multiple .standard-markdown blocks (intro + full response).
+        const isClaude = location.hostname.includes('claude.ai');
+
+        nodes.forEach(el => {
+            if (isGemini) {
+                // ── User sub-element ──────────────────────────────────────────────────
+                const userLines = el.querySelectorAll('p.query-text-line');
+                let userText = '';
+                userLines.forEach(p => {
+                    userText += p.textContent.trim() + '\n';
+                });
+                userText = userText.trim();
+                if (userText) {
+                    const userHtml = userText
+                        .split('\n')
+                        .map(l => `<p>${l}</p>`)
+                        .join('');
+                    rawMessages.push({ role: 'user', markdown: userText, html: userHtml, text: userText });
+                }
+
+                // ── Assistant sub-element (first/visible draft only) ──────────────────
+                const assistantEl = el.querySelector(contentSel.assistant);
+                if (assistantEl) {
+                    const html = cleanHtml(assistantEl);
+                    const text = assistantEl.textContent.trim();
+                    if (text) {
+                        rawMessages.push({ role: 'assistant', markdown: htmlToMarkdown(html), html, text });
+                    }
+                }
+            } else if (isClaude) {
+                // ── User turn ────────────────────────────────────────────────────────
+                const userMsgEl = el.querySelector('[data-testid="user-message"]');
+                if (userMsgEl) {
+                    const html = cleanHtml(userMsgEl);
+                    const text = userMsgEl.textContent.trim();
+                    if (text) rawMessages.push({ role: 'user', markdown: htmlToMarkdown(html), html, text });
+                    return;
+                }
+
+                // ── Assistant turn ───────────────────────────────────────────────────
+                // Collect all .standard-markdown / .progressive-markdown blocks, clone
+                // into one wrapper div (avoids Tailwind class names being Turndown-escaped).
+                const streamingEl = el.querySelector('[data-is-streaming]');
+                if (streamingEl) {
+                    const mdBlocks = Array.from(
+                        streamingEl.querySelectorAll('.standard-markdown, .progressive-markdown'),
+                    ).filter(b => b.textContent.trim().length > 0);
+
+                    let contentEl;
+                    if (mdBlocks.length === 0) {
+                        contentEl = streamingEl.querySelector('[class*="font-claude-response"]') || streamingEl;
+                    } else if (mdBlocks.length === 1) {
+                        contentEl = mdBlocks[0];
+                    } else {
+                        contentEl = document.createElement('div');
+                        mdBlocks.forEach(b => contentEl.appendChild(b.cloneNode(true)));
+                    }
+
+                    const html = cleanHtml(contentEl);
+                    const text = contentEl.textContent.trim();
+                    if (text) rawMessages.push({ role: 'assistant', markdown: htmlToMarkdown(html), html, text });
+                }
+            } else {
+                const role = detectRole(el);
+                const sel = role === 'user' ? contentSel.user : contentSel.assistant;
+                const contentEl = sel ? el.querySelector(sel) || el : el;
+
+                const html = cleanHtml(contentEl);
+                const markdown = htmlToMarkdown(html);
+                const text = contentEl.textContent.trim();
+
+                if (text) rawMessages.push({ role, markdown, html, text });
+            }
+        });
+
+        const totalEl = document.getElementById('mde-total');
+        if (totalEl) totalEl.textContent = rawMessages.length;
+    }
+
+    function detectRole(el) {
+        // Grok (grok.com / x.com): role is encoded as items-end (user) or items-start (assistant)
+        const isGrok = location.hostname.includes('grok.com') || location.hostname === 'x.com';
+        if (isGrok) {
+            const cls = el.className || '';
+            return cls.includes('items-end') ? 'user' : 'assistant';
+        }
+
+        const attr = site.roleAttr ? el.getAttribute(site.roleAttr) || '' : '';
+        const cls = el.className || '';
+        const text = attr.toLowerCase() + ' ' + cls.toLowerCase();
+        if (text.includes('user') || text.includes('human')) return 'user';
+        // Gemini: first child in conversation-container is user
+        if (location.hostname.includes('gemini')) {
+            const idx = Array.from(el.parentElement?.children || []).indexOf(el);
+            return idx % 2 === 0 ? 'user' : 'assistant';
+        }
+        return 'assistant';
+    }
+
+    // ── Render message checklist ──────────────────────────────────────────────
+
+    function renderList() {
+        const list = document.getElementById('mde-list');
+        if (!list) return;
+        if (!rawMessages.length) {
+            list.innerHTML =
+                '<div style="padding:24px;text-align:center;color:#3B3E52;font-size:12px">No messages found</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        rawMessages.forEach((msg, i) => {
+            const isUser = msg.role === 'user';
+            const row = document.createElement('div');
+            row.className = `mde-row${selectedIndices.has(i) ? ' mde-sel' : ''}`;
+            row.dataset.i = i;
+
+            const preview = msg.text.slice(0, 80) + (msg.text.length > 80 ? '…' : '');
+            row.innerHTML = `
               <div class="mde-cb"><span class="mde-cb-tick">✓</span></div>
               <div class="mde-row-info">
                 <div class="mde-row-meta">
@@ -636,119 +635,137 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
               </div>
             `;
 
-      row.onclick = () => toggleRow(i, row);
-      list.appendChild(row);
-    });
+            row.onclick = () => toggleRow(i, row);
+            list.appendChild(row);
+        });
 
-    refreshExportBtn();
-  }
-
-  function toggleRow(i, row) {
-    if (selectedIndices.has(i)) { selectedIndices.delete(i); row.classList.remove('mde-sel'); }
-    else { selectedIndices.add(i); row.classList.add('mde-sel'); }
-    document.querySelectorAll('.mde-chip').forEach(c => c.classList.remove('mde-active'));
-    refreshExportBtn();
-  }
-
-  function applyChip(preset) {
-    const total = rawMessages.length;
-    document.querySelectorAll('.mde-chip').forEach(c => c.classList.remove('mde-active'));
-    document.querySelector(`.mde-chip[data-sel="${preset}"]`)?.classList.add('mde-active');
-
-    switch (preset) {
-      case 'all': selectedIndices = new Set([...Array(total).keys()]); break;
-      case 'none': selectedIndices = new Set(); break;
-      case 'user': selectedIndices = new Set(rawMessages.map((m, i) => m.role === 'user' ? i : -1).filter(i => i >= 0)); break;
-      case 'ai': selectedIndices = new Set(rawMessages.map((m, i) => m.role !== 'user' ? i : -1).filter(i => i >= 0)); break;
-      case 'first10': selectedIndices = new Set([...Array(Math.min(10, total)).keys()]); break;
-      case 'last10': selectedIndices = new Set([...Array(Math.min(10, total)).keys()].map(i => total - Math.min(10, total) + i)); break;
+        refreshExportBtn();
     }
 
-    document.querySelectorAll('.mde-row').forEach(row => {
-      const i = parseInt(row.dataset.i);
-      row.classList.toggle('mde-sel', selectedIndices.has(i));
-    });
-    refreshExportBtn();
-  }
-
-  function refreshExportBtn() {
-    const btn = document.getElementById('mde-export-btn');
-    if (!btn) return;
-    const n = selectedIndices.size;
-    btn.disabled = n === 0;
-    btn.lastChild.textContent = ` Export ${n} msg${n !== 1 ? 's' : ''}`;
-  }
-
-  // ── Export via background service worker ──────────────────────────────────
-
-  async function doExport() {
-    if (!rawMessages.length || !selectedIndices.size) return;
-    const btn = document.getElementById('mde-export-btn');
-    btn.disabled = true;
-    setStatus('', `Processing ${selectedIndices.size} messages…`);
-
-    const sorted = [...selectedIndices].sort((a, b) => a - b);
-    const filteredData = {
-      title: document.title || `${site.name} Chat`,
-      site: site.name,
-      messages: sorted.map(i => rawMessages[i]),
-    };
-
-    try {
-      const resp = await chrome.runtime.sendMessage({
-        action: 'overlayExport',
-        format: selectedFormat,
-        conversationData: filteredData,
-      });
-      if (resp?.success) {
-        setStatus('mde-ok', `✓ ${selectedFormat.toUpperCase()} saved! (${selectedIndices.size} msgs)`);
-      } else {
-        setStatus('mde-err', 'Failed: ' + (resp?.error || 'unknown'));
-      }
-    } catch (e) {
-      setStatus('mde-err', e.message);
-    } finally {
-      btn.disabled = false;
+    function toggleRow(i, row) {
+        if (selectedIndices.has(i)) {
+            selectedIndices.delete(i);
+            row.classList.remove('mde-sel');
+        } else {
+            selectedIndices.add(i);
+            row.classList.add('mde-sel');
+        }
+        document.querySelectorAll('.mde-chip').forEach(c => c.classList.remove('mde-active'));
+        refreshExportBtn();
     }
-  }
 
-  // ── Utilities ─────────────────────────────────────────────────────────────
+    function applyChip(preset) {
+        const total = rawMessages.length;
+        document.querySelectorAll('.mde-chip').forEach(c => c.classList.remove('mde-active'));
+        document.querySelector(`.mde-chip[data-sel="${preset}"]`)?.classList.add('mde-active');
 
-  function setStatus(cls, msg) {
-    const el = document.getElementById('mde-status');
-    if (!el) return;
-    el.className = cls ? `mde-status ${cls}` : '';
-    el.textContent = msg;
-  }
-  function esc(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
+        switch (preset) {
+            case 'all':
+                selectedIndices = new Set([...Array(total).keys()]);
+                break;
+            case 'none':
+                selectedIndices = new Set();
+                break;
+            case 'user':
+                selectedIndices = new Set(rawMessages.map((m, i) => (m.role === 'user' ? i : -1)).filter(i => i >= 0));
+                break;
+            case 'ai':
+                selectedIndices = new Set(rawMessages.map((m, i) => (m.role !== 'user' ? i : -1)).filter(i => i >= 0));
+                break;
+            case 'first10':
+                selectedIndices = new Set([...Array(Math.min(10, total)).keys()]);
+                break;
+            case 'last10':
+                selectedIndices = new Set(
+                    [...Array(Math.min(10, total)).keys()].map(i => total - Math.min(10, total) + i),
+                );
+                break;
+        }
 
-  // ── MutationObserver: keep UI alive + inject per-msg buttons on new content
+        document.querySelectorAll('.mde-row').forEach(row => {
+            const i = parseInt(row.dataset.i);
+            row.classList.toggle('mde-sel', selectedIndices.has(i));
+        });
+        refreshExportBtn();
+    }
 
-  let injectTimer = null;
-  const obs = new MutationObserver(() => {
-    ensureFAB();
-    clearTimeout(injectTimer);
-    injectTimer = setTimeout(injectMsgButtons, 600);
-  });
+    function refreshExportBtn() {
+        const btn = document.getElementById('mde-export-btn');
+        if (!btn) return;
+        const n = selectedIndices.size;
+        btn.disabled = n === 0;
+        btn.lastChild.textContent = ` Export ${n} msg${n !== 1 ? 's' : ''}`;
+    }
 
-  // ── Boot ──────────────────────────────────────────────────────────────────
+    // ── Export via background service worker ──────────────────────────────────
 
-  function boot() {
-    injectStyles();
-    buildPanel();
-    ensureFAB();
-    injectMsgButtons();
+    async function doExport() {
+        if (!rawMessages.length || !selectedIndices.size) return;
+        const btn = document.getElementById('mde-export-btn');
+        btn.disabled = true;
+        setStatus('', `Processing ${selectedIndices.size} messages…`);
 
-    // Watch body for DOM changes (SPA navigation, new messages)
-    obs.observe(document.body, { childList: true, subtree: true });
-  }
+        const sorted = [...selectedIndices].sort((a, b) => a - b);
+        const filteredData = {
+            title: document.title || `${site.name} Chat`,
+            site: site.name,
+            messages: sorted.map(i => rawMessages[i]),
+        };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 600));
-  } else {
-    setTimeout(boot, 600);
-  }
+        try {
+            const resp = await chrome.runtime.sendMessage({
+                action: 'overlayExport',
+                format: selectedFormat,
+                conversationData: filteredData,
+            });
+            if (resp?.success) {
+                setStatus('mde-ok', `✓ ${selectedFormat.toUpperCase()} saved! (${selectedIndices.size} msgs)`);
+            } else {
+                setStatus('mde-err', 'Failed: ' + (resp?.error || 'unknown'));
+            }
+        } catch (e) {
+            setStatus('mde-err', e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
 
+    // ── Utilities ─────────────────────────────────────────────────────────────
+
+    function setStatus(cls, msg) {
+        const el = document.getElementById('mde-status');
+        if (!el) return;
+        el.className = cls ? `mde-status ${cls}` : '';
+        el.textContent = msg;
+    }
+    function esc(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ── MutationObserver: keep UI alive + inject per-msg buttons on new content
+
+    let injectTimer = null;
+    const obs = new MutationObserver(() => {
+        ensureFAB();
+        clearTimeout(injectTimer);
+        injectTimer = setTimeout(injectMsgButtons, 600);
+    });
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
+
+    function boot() {
+        injectStyles();
+        buildPanel();
+        ensureFAB();
+        injectMsgButtons();
+
+        // Watch body for DOM changes (SPA navigation, new messages)
+        obs.observe(document.body, { childList: true, subtree: true });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 600));
+    } else {
+        setTimeout(boot, 600);
+    }
 })(); // end IIFE

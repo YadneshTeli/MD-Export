@@ -28,9 +28,9 @@ import { cleanHtml, htmlToMarkdown, getPageTitle } from './base_scraper.js';
  * characters as markdown syntax.
  */
 function buildAssistantWrapper(streamingEl) {
-    const mdBlocks = Array.from(
-        streamingEl.querySelectorAll('.standard-markdown, .progressive-markdown')
-    ).filter(b => b.textContent.trim().length > 0);
+    const mdBlocks = Array.from(streamingEl.querySelectorAll('.standard-markdown, .progressive-markdown')).filter(
+        b => b.textContent.trim().length > 0,
+    );
 
     if (mdBlocks.length === 0) {
         // Fallback: use the whole font-claude-response div
@@ -92,14 +92,11 @@ export function scrapeConversation() {
 
     // ── Strategy 2: Legacy data-testid selectors (older Claude versions) ────
     if (messages.length === 0) {
-        const allTurns = Array.from(
-            document.querySelectorAll('[data-testid="human-turn"], [data-testid="ai-turn"]')
-        );
+        const allTurns = Array.from(document.querySelectorAll('[data-testid="human-turn"], [data-testid="ai-turn"]'));
         allTurns.forEach(turn => {
             const isHuman = turn.getAttribute('data-testid') === 'human-turn';
             const role = isHuman ? 'user' : 'assistant';
-            const contentEl =
-                turn.querySelector('.prose, div[class*="prose"], div[class*="markdown"]') || turn;
+            const contentEl = turn.querySelector('.prose, div[class*="prose"], div[class*="markdown"]') || turn;
             const html = cleanHtml(contentEl);
             messages.push({
                 role,
@@ -113,7 +110,7 @@ export function scrapeConversation() {
     // ── Strategy 3: Class-name heuristics ───────────────────────────────────
     if (messages.length === 0) {
         const fallbackTurns = document.querySelectorAll(
-            '[class*="HumanMessage"], [class*="humanMessage"], [class*="AIMessage"], [class*="assistantMessage"]'
+            '[class*="HumanMessage"], [class*="humanMessage"], [class*="AIMessage"], [class*="assistantMessage"]',
         );
         fallbackTurns.forEach(el => {
             const cls = el.className.toString().toLowerCase();

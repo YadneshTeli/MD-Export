@@ -5,8 +5,6 @@
  * across VS Code, GitHub, Obsidian, Typora, and other renderers.
  */
 
-import { stripInline } from '../pipeline/preprocess.js';
-
 /**
  * Convert a ProcessedConversation to a GFM Markdown string.
  * @param {ProcessedConversation} processed
@@ -14,7 +12,10 @@ import { stripInline } from '../pipeline/preprocess.js';
 export function toMarkdown(processed) {
     const { title, site, exportedAt, stats, messages } = processed;
     const date = new Date(exportedAt).toLocaleDateString('en-US', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
     });
 
     const lines = [];

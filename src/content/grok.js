@@ -50,9 +50,10 @@ export function scrapeConversation() {
         const testIdTurns = document.querySelectorAll('[data-testid*="message"], [data-testid*="turn"]');
         testIdTurns.forEach(turn => {
             const roleAttr = turn.getAttribute('data-testid') || '';
-            const role = roleAttr.toLowerCase().includes('human') || roleAttr.toLowerCase().includes('user')
-                ? 'user'
-                : 'assistant';
+            const role =
+                roleAttr.toLowerCase().includes('human') || roleAttr.toLowerCase().includes('user')
+                    ? 'user'
+                    : 'assistant';
             const contentEl =
                 turn.querySelector('.response-content-markdown') ||
                 turn.querySelector('[class*="message-content"]') ||
@@ -75,8 +76,14 @@ export function scrapeConversation() {
             for (let i = 0; i < 6; i++) {
                 el = el.parentElement;
                 if (!el) break;
-                if (el.className && el.className.includes('items-end')) { role = 'user'; break; }
-                if (el.className && el.className.includes('items-start')) { role = 'assistant'; break; }
+                if (el.className && el.className.includes('items-end')) {
+                    role = 'user';
+                    break;
+                }
+                if (el.className && el.className.includes('items-start')) {
+                    role = 'assistant';
+                    break;
+                }
             }
             const contentEl = block.querySelector('.response-content-markdown') || block;
             const html = cleanHtml(contentEl);

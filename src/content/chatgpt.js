@@ -11,7 +11,7 @@ export function scrapeConversation() {
     // ChatGPT changed from <article> to <section> in mid-2025.
     // Match both for forward/backward compatibility.
     const articles = document.querySelectorAll(
-        'section[data-testid^="conversation-turn-"], article[data-testid^="conversation-turn-"]'
+        'section[data-testid^="conversation-turn-"], article[data-testid^="conversation-turn-"]',
     );
 
     if (!articles || articles.length === 0) {
@@ -20,11 +20,12 @@ export function scrapeConversation() {
 
     const messages = [];
 
-    articles.forEach((article) => {
+    articles.forEach(article => {
         // Prefer data-turn; fall back to data-message-author-role inside the article
-        const role = article.getAttribute('data-turn')
-            || article.querySelector('[data-message-author-role]')?.getAttribute('data-message-author-role')
-            || null;
+        const role =
+            article.getAttribute('data-turn') ||
+            article.querySelector('[data-message-author-role]')?.getAttribute('data-message-author-role') ||
+            null;
         if (!role) return;
 
         let contentHtml = '';
@@ -52,7 +53,8 @@ export function scrapeConversation() {
                 if (msgEl) {
                     // Clone and strip the role label heading before extracting
                     const clone = msgEl.cloneNode(true);
-                    clone.querySelectorAll('h1,h2,h3,h4,h5,h6,[class*="author"],[class*="role-label"]')
+                    clone
+                        .querySelectorAll('h1,h2,h3,h4,h5,h6,[class*="author"],[class*="role-label"]')
                         .forEach(el => el.remove());
                     contentHtml = cleanHtml(clone);
                     contentText = clone.textContent.trim();

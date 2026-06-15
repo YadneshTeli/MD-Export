@@ -22,8 +22,7 @@ _td.remove(['source-footnote', 'sources-carousel-inline', 'grammarly-extension']
 _td.addRule('citationPill', {
     filter: node =>
         node.nodeName === 'SPAN' &&
-        (node.getAttribute('data-testid') === 'webpage-citation-pill' ||
-            node.getAttribute('data-state') === 'closed'),
+        (node.getAttribute('data-testid') === 'webpage-citation-pill' || node.getAttribute('data-state') === 'closed'),
     replacement: () => '',
 });
 
@@ -55,6 +54,7 @@ export function htmlToMarkdown(html) {
         return _td.turndown(html).trim();
     } catch (e) {
         // Fallback: return plain text
+        console.error('htmlToMarkdown error:', e);
         const div = document.createElement('div');
         div.innerHTML = html;
         return div.textContent.trim();
@@ -92,9 +92,13 @@ export function cleanHtml(element) {
         // Extract language: the label <div> appears before the cm-editor wrapper.
         // It contains just the language name as text, e.g. "Python", "JavaScript".
         let lang = '';
-        const headerLabel = pre.querySelector('.flex.items-center.text-sm.font-medium') || pre.querySelector('.flex.max-w-\\[75\\%\\]');
+        const headerLabel =
+            pre.querySelector('.flex.items-center.text-sm.font-medium') || pre.querySelector('.flex.max-w-\\[75\\%\\]');
         if (headerLabel) {
-            lang = headerLabel.textContent.trim().toLowerCase().replace(/[^a-z0-9#+.-]/g, '');
+            lang = headerLabel.textContent
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9#+.-]/g, '');
         }
 
         // Extract plain code text from the CodeMirror content.
@@ -125,7 +129,10 @@ export function cleanHtml(element) {
         const headerSpan = cb.querySelector('.code-block-decoration span');
         const codeEl = cb.querySelector('pre code');
         if (headerSpan && codeEl) {
-            const lang = headerSpan.textContent.trim().toLowerCase().replace(/[^a-z0-9#+.-]/g, '');
+            const lang = headerSpan.textContent
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9#+.-]/g, '');
             if (lang && !codeEl.className.includes('language-')) {
                 codeEl.classList.add(`language-${lang}`);
             }
@@ -150,21 +157,33 @@ export function cleanHtml(element) {
 
     // ── Step 2: Remove remaining noisy elements
     const noisy = [
-        'button', 'grammarly-extension', 'source-footnote',
-        'sources-carousel-inline', 'source-attribution', 'cite',
+        'button',
+        'grammarly-extension',
+        'source-footnote',
+        'sources-carousel-inline',
+        'source-attribution',
+        'cite',
         '[data-testid="source-footnote"]',
         '[data-testid="web-browsing-attribution"]',
         '[class*="browsing-attribution"]',
-        'svg', '.sr-only', '.cdk-visually-hidden', '[aria-hidden="true"]',
-        'model-thoughts', 'tts-control', 'bard-avatar',
+        'svg',
+        '.sr-only',
+        '.cdk-visually-hidden',
+        '[aria-hidden="true"]',
+        'model-thoughts',
+        'tts-control',
+        'bard-avatar',
     ];
     noisy.forEach(sel => {
-        try { clone.querySelectorAll(sel).forEach(el => el.remove()); } catch { }
+        try {
+            clone.querySelectorAll(sel).forEach(el => el.remove());
+        } catch {
+            /* ignore */
+        }
     });
 
     return clone.innerHTML;
 }
-
 
 export function waitForElement(selector, timeout = 5000) {
     return new Promise((resolve, reject) => {
@@ -172,13 +191,26 @@ export function waitForElement(selector, timeout = 5000) {
         if (el) return resolve(el);
         const observer = new MutationObserver(() => {
             const found = document.querySelector(selector);
-            if (found) { observer.disconnect(); resolve(found); }
+            if (found) {
+                observer.disconnect();
+                resolve(found);
+            }
         });
         observer.observe(document.body, { childList: true, subtree: true });
-        setTimeout(() => { observer.disconnect(); reject(new Error('Timeout: ' + selector)); }, timeout);
+        setTimeout(() => {
+            observer.disconnect();
+            reject(new Error('Timeout: ' + selector));
+        }, timeout);
     });
 }
 
 export function getPageTitle() {
-    return document.title.replace(' - ChatGPT', '').replace(' - Gemini', '').replace(' - Grok', '').replace(' - Claude', '').trim() || 'Chat Export';
+    return (
+        document.title
+            .replace(' - ChatGPT', '')
+            .replace(' - Gemini', '')
+            .replace(' - Grok', '')
+            .replace(' - Claude', '')
+            .trim() || 'Chat Export'
+    );
 }

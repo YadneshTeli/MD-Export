@@ -14,7 +14,7 @@
  * Output: ProcessedConversation (clean, structured, ready for any exporter)
  */
 
-import { htmlToMarkdown, cleanHtml } from '../content/base_scraper.js';
+import { htmlToMarkdown } from '../content/base_scraper.js';
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -32,7 +32,7 @@ export function preprocess(raw, range = null) {
 
     // Apply optional range filter (1-indexed, inclusive)
     if (range) {
-        const from = Math.max(1, range.from || 1) - 1;          // convert to 0-indexed
+        const from = Math.max(1, range.from || 1) - 1; // convert to 0-indexed
         const to = Math.min(normalized.length, range.to || normalized.length);
         normalized = normalized.slice(from, to);
     }
@@ -180,7 +180,9 @@ function removeNoiseNodes(dom) {
     noiseSelectors.forEach(sel => {
         try {
             dom.querySelectorAll(sel).forEach(el => el.remove());
-        } catch { /* invalid selector — skip */ }
+        } catch {
+            /* invalid selector — skip */
+        }
     });
 }
 
@@ -205,20 +207,23 @@ function sanitizeMarkdown(md) {
     // Collapse char-spacing artifacts: sequences like "D N S _ P R O B E" (≥4 single
     // chars each separated by exactly one space) back to the original word.
     // These come from ChatGPT syntax-highlighting spans that wrap each char individually.
-    out = out.replace(/(?<![\S])((?:[A-Za-z0-9_!@#%^&*()\-+=,.] ){4,}[A-Za-z0-9_!@#%^&*()\-+=,.])(?![\S])/g,
-        m => m.replace(/ /g, ''));
+    out = out.replace(/(?<![\S])((?:[A-Za-z0-9_!@#%^&*()\-+=,.] ){4,}[A-Za-z0-9_!@#%^&*()\-+=,.])(?![\S])/g, m =>
+        m.replace(/ /g, ''),
+    );
 
-    return out
-        // Normalise Windows CRLF → LF
-        .replace(/\r\n/g, '\n')
-        // Remove HTML comment remnants
-        .replace(/<!--[\s\S]*?-->/g, '')
-        // Normalise code fence backticks (4+ → 3)
-        .replace(/^`{4,}(\w*)/gm, '```$1')
-        // Collapse 3+ consecutive blank lines → 2
-        .replace(/(\n\s*){3,}/g, '\n\n')
-        // Trim leading/trailing whitespace
-        .trim();
+    return (
+        out
+            // Normalise Windows CRLF → LF
+            .replace(/\r\n/g, '\n')
+            // Remove HTML comment remnants
+            .replace(/<!--[\s\S]*?-->/g, '')
+            // Normalise code fence backticks (4+ → 3)
+            .replace(/^`{4,}(\w*)/gm, '```$1')
+            // Collapse 3+ consecutive blank lines → 2
+            .replace(/(\n\s*){3,}/g, '\n\n')
+            // Trim leading/trailing whitespace
+            .trim()
+    );
 }
 
 // ─── Stage 5: Parse Segments ──────────────────────────────────────────────────
@@ -242,9 +247,15 @@ export function parseSegments(md) {
     const flushTable = () => {
         if (tableBuffer.length >= 2) {
             // Parse header + rows
-            const header = tableBuffer[0].split('|').map(c => c.trim()).filter(Boolean);
+            const header = tableBuffer[0]
+                .split('|')
+                .map(c => c.trim())
+                .filter(Boolean);
             const rows = tableBuffer.slice(2).map(row =>
-                row.split('|').map(c => c.trim()).filter(Boolean)
+                row
+                    .split('|')
+                    .map(c => c.trim())
+                    .filter(Boolean),
             );
             segs.push({ type: 'table', header, rows });
         }
@@ -267,7 +278,11 @@ export function parseSegments(md) {
                     popCount = 1;
                     lastSeg = segs[segs.length - 2];
                 }
-                if (lastSeg && lastSeg.type === 'paragraph' && lastSeg.text.trim().toLowerCase() === codeBlock.lang.toLowerCase()) {
+                if (
+                    lastSeg &&
+                    lastSeg.type === 'paragraph' &&
+                    lastSeg.text.trim().toLowerCase() === codeBlock.lang.toLowerCase()
+                ) {
                     // Remove both the paragraph and the trailing break if present
                     segs.splice(segs.length - 1 - popCount, popCount + 1);
                 }
@@ -277,7 +292,10 @@ export function parseSegments(md) {
             }
             continue;
         }
-        if (codeBlock !== null) { codeBlock.lines.push(line); continue; }
+        if (codeBlock !== null) {
+            codeBlock.lines.push(line);
+            continue;
+        }
 
         // ── Tables (GFM pipe tables)
         if (line.includes('|') && line.trim().startsWith('|')) {
@@ -291,28 +309,52 @@ export function parseSegments(md) {
         const h3 = line.match(/^### (.+)/);
         const h2 = line.match(/^## (.+)/);
         const h1 = line.match(/^# (.+)/);
-        if (h1) { segs.push({ type: 'heading1', text: h1[1].trim() }); continue; }
-        if (h2) { segs.push({ type: 'heading2', text: h2[1].trim() }); continue; }
-        if (h3) { segs.push({ type: 'heading3', text: h3[1].trim() }); continue; }
+        if (h1) {
+            segs.push({ type: 'heading1', text: h1[1].trim() });
+            continue;
+        }
+        if (h2) {
+            segs.push({ type: 'heading2', text: h2[1].trim() });
+            continue;
+        }
+        if (h3) {
+            segs.push({ type: 'heading3', text: h3[1].trim() });
+            continue;
+        }
 
         // ── HR
-        if (/^---+$/.test(line.trim())) { segs.push({ type: 'hr' }); continue; }
+        if (/^---+$/.test(line.trim())) {
+            segs.push({ type: 'hr' });
+            continue;
+        }
 
         // ── Bullet list  (handles indented items like "  - text")
         const trimmedLine = line.replace(/^\s+/, '');
         const bullet = trimmedLine.match(/^([-*+])\s(.+)/);
-        if (bullet) { segs.push({ type: 'bullet', text: bullet[2] }); continue; }
+        if (bullet) {
+            segs.push({ type: 'bullet', text: bullet[2] });
+            continue;
+        }
 
         // ── Numbered list (handles indented items)
         const numbered = trimmedLine.match(/^(\d+)\.\s(.+)/);
-        if (numbered) { segs.push({ type: 'numbered', n: parseInt(numbered[1], 10), text: numbered[2] }); continue; }
+        if (numbered) {
+            segs.push({ type: 'numbered', n: parseInt(numbered[1], 10), text: numbered[2] });
+            continue;
+        }
 
         // ── Blockquote
         const bq = line.match(/^>\s?(.+)/);
-        if (bq) { segs.push({ type: 'blockquote', text: bq[1] }); continue; }
+        if (bq) {
+            segs.push({ type: 'blockquote', text: bq[1] });
+            continue;
+        }
 
         // ── Blank line
-        if (line.trim() === '') { segs.push({ type: 'break' }); continue; }
+        if (line.trim() === '') {
+            segs.push({ type: 'break' });
+            continue;
+        }
 
         // ── Paragraph
         segs.push({ type: 'paragraph', text: line });
@@ -323,9 +365,7 @@ export function parseSegments(md) {
     if (tableBuffer.length) flushTable();
 
     // Deduplicate consecutive breaks
-    return segs.filter((seg, i) =>
-        !(seg.type === 'break' && segs[i - 1]?.type === 'break')
-    );
+    return segs.filter((seg, i) => !(seg.type === 'break' && segs[i - 1]?.type === 'break'));
 }
 
 // ─── Stage 6: Enrich ─────────────────────────────────────────────────────────
@@ -333,9 +373,7 @@ export function parseSegments(md) {
 function stageEnrich(msg) {
     const codeSegs = msg.segments.filter(s => s.type === 'code');
     const hasCode = codeSegs.length > 0;
-    const codeLanguages = [...new Set(
-        codeSegs.map(s => s.lang).filter(Boolean)
-    )];
+    const codeLanguages = [...new Set(codeSegs.map(s => s.lang).filter(Boolean))];
 
     const hasTable = msg.segments.some(s => s.type === 'table');
     const hasBullets = msg.segments.some(s => s.type === 'bullet' || s.type === 'numbered');
@@ -343,8 +381,8 @@ function stageEnrich(msg) {
 
     // Word count (from plain text derived from markdown)
     const plainText = msg.markdown
-        .replace(/```[\s\S]*?```/g, '')   // strip code blocks
-        .replace(/[#*`_~[\]()]/g, '')      // strip markdown chars
+        .replace(/```[\s\S]*?```/g, '') // strip code blocks
+        .replace(/[#*`_~[\]()]/g, '') // strip markdown chars
         .replace(/\s+/g, ' ')
         .trim();
     const wordCount = plainText ? plainText.split(' ').length : 0;
@@ -363,7 +401,7 @@ function stageEnrich(msg) {
 
 // ─── Stage 7: Aggregate Stats ─────────────────────────────────────────────────
 
-function stageAggregate(messages, raw) {
+function stageAggregate(messages, _raw) {
     const userMessages = messages.filter(m => m.role === 'user').length;
     const assistantMessages = messages.filter(m => m.role === 'assistant').length;
     const totalWords = messages.reduce((s, m) => s + m.wordCount, 0);
@@ -389,11 +427,11 @@ function stageAggregate(messages, raw) {
 
 export function stripInline(text) {
     return (text || '')
-        .replace(/\*\*(.+?)\*\*/g, '$1')   // **bold**
-        .replace(/\*(.+?)\*/g, '$1')   // *italic*
-        .replace(/`(.+?)`/g, '$1')   // `code`
-        .replace(/~~(.+?)~~/g, '$1')   // ~~strike~~
-        .replace(/\[(.+?)\]\(.+?\)/g, '$1')   // [links](url)
-        .replace(/!\[.*?\]\(.+?\)/g, '')     // images
+        .replace(/\*\*(.+?)\*\*/g, '$1') // **bold**
+        .replace(/\*(.+?)\*/g, '$1') // *italic*
+        .replace(/`(.+?)`/g, '$1') // `code`
+        .replace(/~~(.+?)~~/g, '$1') // ~~strike~~
+        .replace(/\[(.+?)\]\(.+?\)/g, '$1') // [links](url)
+        .replace(/!\[.*?\]\(.+?\)/g, '') // images
         .trim();
 }

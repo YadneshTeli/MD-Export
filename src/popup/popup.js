@@ -19,8 +19,8 @@ const SUPPORTED_SITES = {
 
 let conversationData = null;
 let selectedFormat = 'md';
-let rangeFrom = 1;   // 1-indexed, inclusive
-let rangeTo = 1;     // 1-indexed, inclusive
+let rangeFrom = 1; // 1-indexed, inclusive
+let rangeTo = 1; // 1-indexed, inclusive
 
 // DOM elements
 const siteBadge = document.getElementById('site-badge');
@@ -83,9 +83,8 @@ function updateRangePreview() {
     rangeToEl.value = rangeTo;
     const count = rangeTo - rangeFrom + 1;
     const total = conversationData?.messages?.length || 0;
-    rangePreview.textContent = rangeFrom === 1 && rangeTo === total
-        ? 'All msgs'
-        : `${count} msg${count !== 1 ? 's' : ''}`;
+    rangePreview.textContent =
+        rangeFrom === 1 && rangeTo === total ? 'All msgs' : `${count} msg${count !== 1 ? 's' : ''}`;
     // Deactivate all chips if manual edit
     chips.forEach(c => c.classList.remove('chip-active'));
     if (rangeFrom === 1 && rangeTo === total) {
@@ -104,18 +103,31 @@ chips.forEach(chip => {
         chips.forEach(c => c.classList.remove('chip-active'));
         chip.classList.add('chip-active');
         switch (preset) {
-            case 'all': rangeFromEl.value = 1; rangeToEl.value = total; break;
-            case 'first10': rangeFromEl.value = 1; rangeToEl.value = Math.min(10, total); break;
-            case 'last10': rangeFromEl.value = Math.max(1, total - 9); rangeToEl.value = total; break;
-            case 'first-half': rangeFromEl.value = 1; rangeToEl.value = Math.ceil(total / 2); break;
-            case 'last-half': rangeFromEl.value = Math.floor(total / 2) + 1; rangeToEl.value = total; break;
+            case 'all':
+                rangeFromEl.value = 1;
+                rangeToEl.value = total;
+                break;
+            case 'first10':
+                rangeFromEl.value = 1;
+                rangeToEl.value = Math.min(10, total);
+                break;
+            case 'last10':
+                rangeFromEl.value = Math.max(1, total - 9);
+                rangeToEl.value = total;
+                break;
+            case 'first-half':
+                rangeFromEl.value = 1;
+                rangeToEl.value = Math.ceil(total / 2);
+                break;
+            case 'last-half':
+                rangeFromEl.value = Math.floor(total / 2) + 1;
+                rangeToEl.value = total;
+                break;
         }
         rangeFrom = parseInt(rangeFromEl.value);
         rangeTo = parseInt(rangeToEl.value);
         const count = rangeTo - rangeFrom + 1;
-        rangePreview.textContent = preset === 'all'
-            ? 'All msgs'
-            : `${count} msg${count !== 1 ? 's' : ''}`;
+        rangePreview.textContent = preset === 'all' ? 'All msgs' : `${count} msg${count !== 1 ? 's' : ''}`;
     });
 });
 
@@ -143,7 +155,10 @@ async function init() {
     setStatus('loading', 'Detecting page…');
 
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab) { showUnsupported(); return; }
+    if (!tab) {
+        showUnsupported();
+        return;
+    }
 
     const url = new URL(tab.url);
     const site = SUPPORTED_SITES[url.hostname];
@@ -170,6 +185,7 @@ async function init() {
             copyBtn.disabled = true;
         }
     } catch (e) {
+        console.error('Popup init: Failed to read page:', e);
         showMain(site, tab.title || `${site} Chat`);
         setStatus('error', 'Could not read page. Reload and try again.');
         exportBtn.disabled = true;
@@ -202,15 +218,16 @@ exportBtn.addEventListener('click', async () => {
             const url = URL.createObjectURL(blob);
             await chrome.downloads.download({ url, filename: `${safe}.md`, saveAs: false });
             URL.revokeObjectURL(url);
-            setStatus('success', `Markdown saved! (${stats.messageCount} msgs · ${stats.totalWords.toLocaleString()} words)`);
-
+            setStatus(
+                'success',
+                `Markdown saved! (${stats.messageCount} msgs · ${stats.totalWords.toLocaleString()} words)`,
+            );
         } else if (selectedFormat === 'docx') {
             const blob = await toDocx(processed);
             const url = URL.createObjectURL(blob);
             await chrome.downloads.download({ url, filename: `${safe}.docx`, saveAs: false });
             URL.revokeObjectURL(url);
             setStatus('success', `DOCX saved! (${stats.messageCount} msgs)`);
-
         } else if (selectedFormat === 'pdf') {
             setStatus('loading', `Rendering PDF… (${stats.messageCount} messages)`);
             const blob = await toPdf(processed);
@@ -219,7 +236,6 @@ exportBtn.addEventListener('click', async () => {
             URL.revokeObjectURL(url);
             setStatus('success', `PDF saved! (${stats.messageCount} msgs · ${stats.totalPages || ''} pages)`);
         }
-
     } catch (e) {
         setStatus('error', 'Export failed: ' + e.message);
     } finally {
@@ -237,14 +253,19 @@ copyBtn.addEventListener('click', async () => {
         await navigator.clipboard.writeText(md);
         copyLabel.textContent = '✓ Copied!';
         setStatus('success', `Markdown copied (${processed.stats.messageCount} msgs)`);
-        setTimeout(() => { copyLabel.textContent = 'Copy as Markdown'; }, 2000);
+        setTimeout(() => {
+            copyLabel.textContent = 'Copy as Markdown';
+        }, 2000);
     } catch (e) {
         setStatus('error', 'Clipboard error: ' + e.message);
     }
 });
 
 function safeFilename(data) {
-    const title = (data.title || 'chat').replace(/[^a-z0-9\s-]/gi, '').replace(/\s+/g, '_').slice(0, 50);
+    const title = (data.title || 'chat')
+        .replace(/[^a-z0-9\s-]/gi, '')
+        .replace(/\s+/g, '_')
+        .slice(0, 50);
     const date = new Date().toISOString().slice(0, 10);
     return `${data.site}_${title}_${date}`;
 }

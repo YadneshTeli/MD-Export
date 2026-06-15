@@ -5,9 +5,18 @@
  */
 
 import {
-    Document, Packer, Paragraph, TextRun, HeadingLevel,
-    AlignmentType, BorderStyle, ShadingType, TableRow, TableCell,
-    Table, WidthType, convertInchesToTwip,
+    Document,
+    Packer,
+    Paragraph,
+    TextRun,
+    HeadingLevel,
+    AlignmentType,
+    BorderStyle,
+    ShadingType,
+    TableRow,
+    TableCell,
+    Table,
+    WidthType,
 } from 'docx';
 import { stripInline } from '../pipeline/preprocess.js';
 
@@ -32,7 +41,9 @@ const C = {
 export async function toDocx(processed) {
     const { title, site, exportedAt, stats, messages } = processed;
     const date = new Date(exportedAt).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
     });
 
     const children = [];
@@ -46,7 +57,12 @@ export async function toDocx(processed) {
         }),
         new Paragraph({
             children: [
-                new TextRun({ text: `${site}  ·  ${date}  ·  ${stats.messageCount} messages  ·  ${stats.totalWords.toLocaleString()} words`, color: C.muted, italics: true, size: 18 }),
+                new TextRun({
+                    text: `${site}  ·  ${date}  ·  ${stats.messageCount} messages  ·  ${stats.totalWords.toLocaleString()} words`,
+                    color: C.muted,
+                    italics: true,
+                    size: 18,
+                }),
             ],
             spacing: { after: 100 },
         }),
@@ -54,19 +70,24 @@ export async function toDocx(processed) {
 
     // Stats summary row
     const statItems = [
-        `You: ${stats.userMessages}`, `${site}: ${stats.assistantMessages}`,
+        `You: ${stats.userMessages}`,
+        `${site}: ${stats.assistantMessages}`,
         `Words: ${stats.totalWords.toLocaleString()}`,
         ...(stats.codeLanguages.length ? [`Code: ${stats.codeLanguages.join(', ')}`] : []),
     ];
     children.push(
         new Paragraph({
-            children: statItems.map((s, i) => [
-                new TextRun({ text: s, bold: true, size: 18, color: C.accent }),
-                i < statItems.length - 1 ? new TextRun({ text: '   ·   ', color: C.muted, size: 18 }) : null,
-            ].filter(Boolean)).flat(),
+            children: statItems
+                .map((s, i) =>
+                    [
+                        new TextRun({ text: s, bold: true, size: 18, color: C.accent }),
+                        i < statItems.length - 1 ? new TextRun({ text: '   ·   ', color: C.muted, size: 18 }) : null,
+                    ].filter(Boolean),
+                )
+                .flat(),
             spacing: { after: 300 },
             border: { bottom: { color: 'CCCCCC', style: BorderStyle.SINGLE, size: 4 } },
-        })
+        }),
     );
 
     // ── Messages ──────────────────────────────────────────────────────────────
@@ -82,13 +103,18 @@ export async function toDocx(processed) {
             new Paragraph({
                 children: [
                     new TextRun({ text: speaker, bold: true, size: 22, color: barColor }),
-                    new TextRun({ text: `  ${wordCount} words${hasCode ? '  · ' + codeLanguages.join(', ') : ''}`, size: 16, color: C.muted, italics: true }),
+                    new TextRun({
+                        text: `  ${wordCount} words${hasCode ? '  · ' + codeLanguages.join(', ') : ''}`,
+                        size: 16,
+                        color: C.muted,
+                        italics: true,
+                    }),
                 ],
                 shading: { type: ShadingType.CLEAR, fill: bgColor, color: bgColor },
                 border: { left: { color: barColor, style: BorderStyle.THICK, size: 12 } },
                 spacing: { before: 200, after: 80 },
                 indent: { left: 120 },
-            })
+            }),
         );
 
         // Render each segment
@@ -103,17 +129,24 @@ export async function toDocx(processed) {
                 text: '',
                 border: { bottom: { color: 'E0E0E0', style: BorderStyle.SINGLE, size: 2 } },
                 spacing: { before: 120, after: 120 },
-            })
+            }),
         );
     }
 
     // Footer note
     children.push(
         new Paragraph({
-            children: [new TextRun({ text: `Exported by MD-Export Chrome Extension  ·  ${date}`, color: C.muted, italics: true, size: 16 })],
+            children: [
+                new TextRun({
+                    text: `Exported by MD-Export Chrome Extension  ·  ${date}`,
+                    color: C.muted,
+                    italics: true,
+                    size: 16,
+                }),
+            ],
             alignment: AlignmentType.CENTER,
             spacing: { before: 300 },
-        })
+        }),
     );
 
     const doc = new Document({
@@ -129,57 +162,92 @@ export async function toDocx(processed) {
 
 function renderDocxSegment(seg, bgColor, C) {
     switch (seg.type) {
-
         case 'heading1':
-            return [new Paragraph({ text: stripInline(seg.text), heading: HeadingLevel.HEADING_1, spacing: { before: 160, after: 80 } })];
+            return [
+                new Paragraph({
+                    text: stripInline(seg.text),
+                    heading: HeadingLevel.HEADING_1,
+                    spacing: { before: 160, after: 80 },
+                }),
+            ];
 
         case 'heading2':
-            return [new Paragraph({ text: stripInline(seg.text), heading: HeadingLevel.HEADING_2, spacing: { before: 140, after: 60 } })];
+            return [
+                new Paragraph({
+                    text: stripInline(seg.text),
+                    heading: HeadingLevel.HEADING_2,
+                    spacing: { before: 140, after: 60 },
+                }),
+            ];
 
         case 'heading3':
-            return [new Paragraph({ text: stripInline(seg.text), heading: HeadingLevel.HEADING_3, spacing: { before: 120, after: 40 } })];
+            return [
+                new Paragraph({
+                    text: stripInline(seg.text),
+                    heading: HeadingLevel.HEADING_3,
+                    spacing: { before: 120, after: 40 },
+                }),
+            ];
 
         case 'hr':
-            return [new Paragraph({ text: '', border: { bottom: { color: 'DDDDDD', style: BorderStyle.SINGLE, size: 2 } }, spacing: { before: 80, after: 80 } })];
+            return [
+                new Paragraph({
+                    text: '',
+                    border: { bottom: { color: 'DDDDDD', style: BorderStyle.SINGLE, size: 2 } },
+                    spacing: { before: 80, after: 80 },
+                }),
+            ];
 
         case 'break':
             return [new Paragraph({ text: '', spacing: { after: 60 } })];
 
         case 'bullet':
-            return [new Paragraph({
-                children: [new TextRun({ text: stripInline(seg.text), size: 20, color: C.text })],
-                bullet: { level: 0 },
-                spacing: { after: 40 },
-            })];
+            return [
+                new Paragraph({
+                    children: [new TextRun({ text: stripInline(seg.text), size: 20, color: C.text })],
+                    bullet: { level: 0 },
+                    spacing: { after: 40 },
+                }),
+            ];
 
         case 'numbered':
-            return [new Paragraph({
-                children: [new TextRun({ text: `${seg.n}. ${stripInline(seg.text)}`, size: 20, color: C.text })],
-                spacing: { after: 40 },
-                indent: { left: 360 },
-            })];
+            return [
+                new Paragraph({
+                    children: [new TextRun({ text: `${seg.n}. ${stripInline(seg.text)}`, size: 20, color: C.text })],
+                    spacing: { after: 40 },
+                    indent: { left: 360 },
+                }),
+            ];
 
         case 'paragraph':
-            return [new Paragraph({
-                children: buildInlineRuns(seg.text, C),
-                spacing: { after: 80 },
-            })];
+            return [
+                new Paragraph({
+                    children: buildInlineRuns(seg.text, C),
+                    spacing: { after: 80 },
+                }),
+            ];
 
         case 'code': {
             const lines = seg.content.split('\n');
             const paragraphs = [];
             if (seg.lang) {
-                paragraphs.push(new Paragraph({
-                    children: [new TextRun({ text: seg.lang, size: 16, color: C.accent, bold: true })],
-                    spacing: { before: 80, after: 20 },
-                }));
+                paragraphs.push(
+                    new Paragraph({
+                        children: [new TextRun({ text: seg.lang, size: 16, color: C.accent, bold: true })],
+                        spacing: { before: 80, after: 20 },
+                    }),
+                );
             }
             lines.forEach(line => {
-                paragraphs.push(new Paragraph({
-                    children: [new TextRun({ text: line || ' ', font: 'Courier New', size: 17, color: C.codeText })],
-                    shading: { type: ShadingType.CLEAR, fill: '1E1E1E' },
-                    spacing: { before: 0, after: 0 },
-                }));
+                paragraphs.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: line || ' ', font: 'Courier New', size: 17, color: C.codeText }),
+                        ],
+                        shading: { type: ShadingType.CLEAR, fill: '1E1E1E' },
+                        spacing: { before: 0, after: 0 },
+                    }),
+                );
             });
             paragraphs.push(new Paragraph({ text: '', spacing: { after: 80 } }));
             return paragraphs;
@@ -191,22 +259,37 @@ function renderDocxSegment(seg, bgColor, C) {
             const colWidth = Math.floor(9000 / colCount);
 
             const headerRow = new TableRow({
-                children: seg.header.map(h => new TableCell({
-                    children: [new Paragraph({ children: [new TextRun({ text: String(h), bold: true, color: 'FFFFFF', size: 18 })] })],
-                    shading: { type: ShadingType.CLEAR, fill: C.accent },
-                    width: { size: colWidth, type: WidthType.DXA },
-                })),
+                children: seg.header.map(
+                    h =>
+                        new TableCell({
+                            children: [
+                                new Paragraph({
+                                    children: [new TextRun({ text: String(h), bold: true, color: 'FFFFFF', size: 18 })],
+                                }),
+                            ],
+                            shading: { type: ShadingType.CLEAR, fill: C.accent },
+                            width: { size: colWidth, type: WidthType.DXA },
+                        }),
+                ),
                 tableHeader: true,
             });
 
-            const dataRows = seg.rows.map((row, ri) => new TableRow({
-                children: row.map(cell => new TableCell({
-                    children: [new Paragraph({ children: [new TextRun({ text: String(cell), size: 18, color: C.text })] })],
-                    shading: ri % 2 === 0
-                        ? undefined
-                        : { type: ShadingType.CLEAR, fill: 'F5F5FF' },
-                })),
-            }));
+            const dataRows = seg.rows.map(
+                (row, ri) =>
+                    new TableRow({
+                        children: row.map(
+                            cell =>
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [new TextRun({ text: String(cell), size: 18, color: C.text })],
+                                        }),
+                                    ],
+                                    shading: ri % 2 === 0 ? undefined : { type: ShadingType.CLEAR, fill: 'F5F5FF' },
+                                }),
+                        ),
+                    }),
+            );
 
             return [
                 new Table({ rows: [headerRow, ...dataRows], width: { size: 100, type: WidthType.PERCENTAGE } }),
