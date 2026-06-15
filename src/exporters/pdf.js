@@ -42,8 +42,8 @@ function sanitizePdfText(text) {
     return (
         (text || '')
             // Replace emoji with nothing (they are decoration; the text still makes sense)
-            // eslint-disable-next-line no-misleading-character-class
             .replace(
+                // eslint-disable-next-line no-misleading-character-class
                 /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FEFF}\u{1F300}-\u{1F9FF}]/gu,
                 '',
             )

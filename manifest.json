@@ -3,6 +3,8 @@
   "name": "MD-Export – AI Chat Exporter",
   "version": "1.0.4",
   "description": "Export ChatGPT, Gemini, Grok, and Claude conversations as Markdown, DOCX, or PDF with full formatting preserved.",
+  "homepage_url": "https://github.com/YadneshTeli/MD-Export",
+  "minimum_chrome_version": "88",
   "permissions": [
     "activeTab",
     "downloads",

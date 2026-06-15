@@ -57,7 +57,10 @@ Then follow steps 4–6 from Option A.
 
 ### From Chrome Web Store
 
-*Coming soon*
+MD-Export is available on the [Chrome Web Store](https://chrome.google.com/webstore/detail/coming-soon).
+
+For detailed publishing guidelines, metadata, and console declarations, see [chrome_web_store_listing.md](chrome_web_store_listing.md).
+For privacy questions, please review our [PRIVACY.md](PRIVACY.md) policy.
 
 ---
 
