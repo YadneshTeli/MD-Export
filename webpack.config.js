@@ -4,15 +4,16 @@ const CopyPlugin = require('copy-webpack-plugin');
 class StripPdfObjectPlugin {
   apply(compiler) {
     compiler.hooks.emit.tapAsync('StripPdfObjectPlugin', (compilation, callback) => {
-      const targetStr = 'https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.1.1/pdfobject.min.js';
-      const replacementStr = '';
+      const pattern = /case\s*["']pdfobjectnewwindow["']\s*:.*?case\s*["']dataurlnewwindow["']\s*:/s;
+      const replacement = 'case "pdfobjectnewwindow": throw new Error("pdfobjectnewwindow not supported"); case "pdfjsnewwindow": throw new Error("pdfjsnewwindow not supported"); case "dataurlnewwindow":';
 
       for (const assetName in compilation.assets) {
         if (assetName.endsWith('.js')) {
           const asset = compilation.assets[assetName];
           const originalSource = asset.source().toString();
-          if (originalSource.includes(targetStr)) {
-            const newSource = originalSource.replaceAll(targetStr, replacementStr);
+          const newSource = originalSource.replace(pattern, replacement);
+          
+          if (newSource !== originalSource) {
             compilation.assets[assetName] = {
               source: () => newSource,
               size: () => newSource.length
