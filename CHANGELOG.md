@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.6] – 2026-06-17
+
+### Added
+
+- **Stripped remote script code** – Added Webpack plugin to compile-time replace jsPDF's hardcoded remote `pdfobject.min.js` script URL with an empty string, satisfying CWS security requirements (fixes Blue Argon).
+
+### Removed
+
+- **Unused `storage` permission** – Removed from `manifest.json` to satisfy CWS Least Privilege policies (fixes Purple Potassium).
+
+---
+
 ## [1.0.5] – 2026-06-15
 
 ### Removed

@@ -56,8 +56,6 @@ Provide these exact descriptions in the console's permission justification texta
     *   *Justification:* "Needed to scrape the DOM elements of the active conversation tab when the user clicks 'Export' in the popup or overlay."
 *   **`downloads`**:
     *   *Justification:* "Needed to download the finalized Markdown, Word DOCX, or PDF file directly to the user's local downloads directory."
-*   **`storage`**:
-    *   *Justification:* "Needed to store the user's preferred default export settings (such as default format) locally on the device."
 *   **`clipboardWrite`**:
     *   *Justification:* "Needed to write the generated Markdown string directly to the system clipboard when the user clicks 'Copy as Markdown'."
 *   **`Host permissions` (chat.openai.com, chatgpt.com, gemini.google.com, grok.com, x.com, claude.ai)**:

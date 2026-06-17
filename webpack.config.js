@@ -1,6 +1,30 @@
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 
+class StripPdfObjectPlugin {
+  apply(compiler) {
+    compiler.hooks.emit.tapAsync('StripPdfObjectPlugin', (compilation, callback) => {
+      const targetStr = 'https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.1.1/pdfobject.min.js';
+      const replacementStr = '';
+
+      for (const assetName in compilation.assets) {
+        if (assetName.endsWith('.js')) {
+          const asset = compilation.assets[assetName];
+          const originalSource = asset.source().toString();
+          if (originalSource.includes(targetStr)) {
+            const newSource = originalSource.replaceAll(targetStr, replacementStr);
+            compilation.assets[assetName] = {
+              source: () => newSource,
+              size: () => newSource.length
+            };
+          }
+        }
+      }
+      callback();
+    });
+  }
+}
+
 const pluginOptions = {};
 
 // Shared resolve config
@@ -46,6 +70,7 @@ const backgroundConfig = {
   output: { path: path.resolve(__dirname, 'dist'), filename: '[name].js' },
   resolve,
   optimization: { minimize: false },
+  plugins: [new StripPdfObjectPlugin()],
 };
 
 // Popup bundle (includes docx + jspdf)
@@ -55,6 +80,7 @@ const popupConfig = {
   output: { path: path.resolve(__dirname, 'dist'), filename: '[name].js' },
   resolve,
   optimization: { minimize: false },
+  plugins: [new StripPdfObjectPlugin()],
   ...pluginOptions,
 };
 
