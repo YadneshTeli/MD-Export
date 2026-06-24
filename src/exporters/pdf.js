@@ -265,7 +265,7 @@ export async function toPdf(processed) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     setColor(colors.textMuted);
-    doc.text('MD-EXPORT  ·  AI CHAT EXPORTER', MARGIN, 12);
+    doc.text('INKFOLD  ·  AI CHAT EXPORTER', MARGIN, 12);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(17);
@@ -360,7 +360,7 @@ export async function toPdf(processed) {
         doc.setFontSize(7);
         setColor(colors.textMuted);
         doc.text(
-            `MD-Export  ·  ${(title || site).slice(0, 60)}  ·  Page ${p} of ${totalPages}`,
+            `Inkfold  ·  ${(title || site).slice(0, 60)}  ·  Page ${p} of ${totalPages}`,
             PAGE_W / 2,
             PAGE_H - 3,
             { align: 'center' },

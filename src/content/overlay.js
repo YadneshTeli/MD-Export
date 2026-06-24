@@ -355,7 +355,7 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
         panel.innerHTML = `
           <div id="mde-hdr">
             <div id="mde-hdr-left">
-              <div id="mde-hdr-title">↓ MD-Export</div>
+              <div id="mde-hdr-title">↓ Inkfold</div>
               <div id="mde-hdr-sub">Select messages · <span id="mde-total">0</span> total</div>
             </div>
             <button id="mde-close-btn" title="Close">✕</button>
@@ -414,7 +414,7 @@ import { cleanHtml, htmlToMarkdown } from './base_scraper.js';
 
         const fab = document.createElement('button');
         fab.id = 'mde-fab';
-        fab.title = 'MD-Export – select & export messages';
+        fab.title = 'Inkfold – select & export messages';
         fab.innerHTML = `
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <path d="M8 1v10M8 11l-3-3M8 11l3-3M2 14h12"

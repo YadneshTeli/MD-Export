@@ -1,4 +1,4 @@
-# Contributing to MD-Export
+# Contributing to Inkfold
 
 Thanks for taking the time to contribute! 🎉
 
@@ -6,8 +6,8 @@ Thanks for taking the time to contribute! 🎉
 
 1. **Fork** the repository and clone your fork:
    ```bash
-   git clone https://github.com/<your-username>/MD-Export.git
-   cd MD-Export
+   git clone https://github.com/<your-username>/Inkfold.git
+   cd Inkfold
    ```
 
 2. **Install dependencies:**
@@ -23,7 +23,7 @@ Thanks for taking the time to contribute! 🎉
 4. **Load the extension in Chrome:**
    - Go to `chrome://extensions/`
    - Enable **Developer mode**
-   - Click **Load unpacked** → select the `MD-Export` folder
+   - Click **Load unpacked** → select the `Inkfold` folder
 
 ## Project Layout
 

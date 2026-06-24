@@ -1,14 +1,14 @@
 # Chrome Web Store Listing Copy & Submission Guide
 
-This document contains the copy and submission metadata required when uploading MD-Export to the Chrome Web Developer Console.
+This document contains the copy and submission metadata required when uploading Inkfold to the Chrome Web Developer Console.
 
 ---
 
 ## 1. Store Metadata
 
 ### Product Name
-`MD-Export – AI Chat Exporter`
-*(28 characters. Max limit: 45 characters)*
+`Inkfold – AI Chat Exporter`
+*(25 characters. Max limit: 45 characters)*
 
 ### Summary / Short Description
 `Export ChatGPT, Claude, Gemini, and Grok conversations as Markdown, DOCX (Word), or PDF with all formatting preserved.`
@@ -16,9 +16,9 @@ This document contains the copy and submission metadata required when uploading 
 
 ### Detailed Description (Long Copy)
 ```markdown
-Export your AI chat conversations instantly with full formatting preserved! MD-Export supports ChatGPT, Claude, Gemini, and Grok, converting your turns into clean Markdown (.md), Microsoft Word (.docx), or print-ready PDF (.pdf) files.
+Export your AI chat conversations instantly with full formatting preserved! Inkfold supports ChatGPT, Claude, Gemini, and Grok, converting your chats into clean Markdown (.md), Microsoft Word (.docx), or print-ready PDF (.pdf) files.
 
-Whether you are saving prompts for documentation, creating offline backups, or compiling research, MD-Export makes it effortless.
+Whether you are saving prompts for documentation, creating offline backups, or compiling research, Inkfold makes it effortless.
 
 ✨ CORE FEATURES:
 • Multi-Platform Support: Seamlessly scrapes ChatGPT (chatgpt.com), Claude (claude.ai), Gemini (gemini.google.com), and Grok (grok.com & x.com).
@@ -37,7 +37,7 @@ Whether you are saving prompts for documentation, creating offline backups, or c
 5. Click "Export" to download your file instantly!
 
 🔒 PRIVACY & SAFETY:
-All scraping, formatting, and file generation are executed entirely within your browser. MD-Export does not communicate with external servers and has zero analytics or trackers. Your chats remain completely private.
+All scraping, formatting, and file generation are executed entirely within your browser. Inkfold does not communicate with external servers and has zero analytics or trackers. Your chats remain completely private.
 ```
 
 ---
@@ -63,12 +63,12 @@ Provide these exact descriptions in the console's permission justification texta
 
 ### Remote Code Declaration
 *   **Are you using remote code?**: Select **"No, I am not using remote code"**.
-    *   *Why:* Under Manifest V3 policies, extensions are not allowed to load remote code. MD-Export bundles all libraries (jsPDF, docx, Turndown) locally in the package.
+    *   *Why:* Under Manifest V3 policies, extensions are not allowed to load remote code. Inkfold bundles all libraries (jsPDF, docx, Turndown) locally in the package.
 
 ### Privacy Declarations / User Data
 *   **Data Usage**: Select **"No"** to "Does this extension collect or transmit user data?"
 *   **Privacy Policy URL**: Host the `PRIVACY.md` file contents on your website or use the GitHub raw link:
-    `https://github.com/YadneshTeli/MD-Export/blob/main/PRIVACY.md`
+    `https://github.com/YadneshTeli/Inkfold/blob/main/PRIVACY.md`
 
 ---
 

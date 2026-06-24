@@ -1,11 +1,11 @@
 {
-    "name": "md-export",
+    "name": "inkfold",
     "version": "1.0.6",
     "description": "Chrome extension to export AI chat conversations",
     "scripts": {
         "build": "webpack --mode production",
         "dev": "webpack --mode development --watch",
-        "package": "npm run build && powershell -Command \"Compress-Archive -Force -Path dist,popup,icons,manifest.json -DestinationPath md-export-v$env:npm_package_version.zip\"",
+        "package": "npm run build && powershell -Command \"Compress-Archive -Force -Path dist,popup,icons,manifest.json -DestinationPath inkfold-v$env:npm_package_version.zip\"",
         "lint": "eslint src/",
         "lint:fix": "eslint src/ --fix",
         "format": "prettier --write \"src/**/*.js\" \"popup/**/*.{html,css}\"",

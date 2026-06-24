@@ -1,5 +1,5 @@
 /**
- * service_worker.js – Background service worker for MD-Export extension
+ * service_worker.js – Background service worker for Inkfold extension
  *
  * Handles 'export' (from popup) and 'overlayExport' (from in-page overlay).
  *

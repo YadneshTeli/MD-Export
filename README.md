@@ -1,8 +1,8 @@
-# MD-Export – AI Chat Exporter
+# Inkfold – AI Chat Exporter
 
-[![Version](https://img.shields.io/badge/version-1.0.6-6C63FF?style=flat-square)](https://github.com/YadneshTeli/MD-Export/releases)
+[![Version](https://img.shields.io/badge/version-1.0.6-6C63FF?style=flat-square)](https://github.com/YadneshTeli/Inkfold/releases)
 [![License](https://img.shields.io/badge/license-MIT-3B82F6?style=flat-square)](LICENSE)
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow?style=flat-square&logo=google-chrome)](https://github.com/YadneshTeli/MD-Export/releases/latest)
+[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow?style=flat-square&logo=google-chrome)](https://github.com/YadneshTeli/Inkfold/releases/latest)
 [![Platforms](https://img.shields.io/badge/supports-ChatGPT%20%7C%20Claude%20%7C%20Gemini%20%7C%20Grok-52C77E?style=flat-square)](#-supported-platforms)
 
 Export conversations from **ChatGPT, Claude, Gemini, and Grok** to Markdown, DOCX, or PDF — with full formatting preserved.
@@ -38,8 +38,8 @@ Export conversations from **ChatGPT, Claude, Gemini, and Grok** to Markdown, DOC
 
 ### Option A — Download Release (No build needed)
 
-1. Go to the [**Releases page**](https://github.com/YadneshTeli/MD-Export/releases/latest)
-2. Download `md-export-vX.X.X.zip`
+1. Go to the [**Releases page**](https://github.com/YadneshTeli/Inkfold/releases/latest)
+2. Download `inkfold-vX.X.X.zip`
 3. Unzip it anywhere on your computer
 4. Open Chrome → `chrome://extensions/`
 5. Enable **Developer mode** (top-right toggle)
@@ -48,8 +48,8 @@ Export conversations from **ChatGPT, Claude, Gemini, and Grok** to Markdown, DOC
 ### Option B — Build from Source
 
 ```bash
-git clone https://github.com/YadneshTeli/MD-Export.git
-cd MD-Export
+git clone https://github.com/YadneshTeli/Inkfold.git
+cd Inkfold
 npm install
 npm run build
 ```
@@ -57,7 +57,7 @@ Then follow steps 4–6 from Option A.
 
 ### From Chrome Web Store
 
-MD-Export is available on the [Chrome Web Store](https://chrome.google.com/webstore/detail/coming-soon).
+Inkfold is available on the [Chrome Web Store](https://chrome.google.com/webstore/detail/coming-soon).
 
 For detailed publishing guidelines, metadata, and console declarations, see [chrome_web_store_listing.md](chrome_web_store_listing.md).
 For privacy questions, please review our [PRIVACY.md](PRIVACY.md) policy.
@@ -74,7 +74,7 @@ For privacy questions, please review our [PRIVACY.md](PRIVACY.md) policy.
 5. Click **Export** — file downloads automatically
 
 ### Toolbar Popup
-1. Click the MD-Export icon in your Chrome toolbar
+1. Click the Inkfold icon in your Chrome toolbar
 2. Choose a format and click Export
 
 ---
@@ -96,7 +96,7 @@ npm run package   # Build + create distributable .zip
 ### Project Structure
 
 ```
-MD-Export/
+Inkfold/
 ├── .github/workflows/   # GitHub Actions (automated release)
 ├── src/
 │   ├── background/      # Service worker (handles export requests)
@@ -151,4 +151,4 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-⭐ If MD-Export saves you time, give it a star on GitHub!
+⭐ If Inkfold saves you time, give it a star on GitHub!

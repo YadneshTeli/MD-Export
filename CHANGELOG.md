@@ -1,17 +1,21 @@
 # Changelog
 
-All notable changes to MD-Export will be documented in this file.
+All notable changes to Inkfold will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [1.0.6] – 2026-06-17
+## [1.0.6] – 2026-06-24
+
+### Changed
+
+- **Project Rebranding** – Renamed the project from MD-Export to **Inkfold**, updated all logo text, HTML titles, document creator metadata, and updated the GitHub repository URL to `https://github.com/YadneshTeli/Inkfold`.
 
 ### Added
 
-- **Stripped remote script code** – Added Webpack plugin to compile-time replace jsPDF's hardcoded remote `pdfobject.min.js` script URL with an empty string, satisfying CWS security requirements (fixes Blue Argon).
+- **Stripped remote script code** – Added Webpack plugin to compile-time replace jsPDF's hardcoded remote `pdfobject.min.js` script URL with dummy error-throwing implementations, satisfying CWS security requirements (fixes Blue Argon).
 
 ### Removed
 

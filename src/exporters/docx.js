@@ -138,7 +138,7 @@ export async function toDocx(processed) {
         new Paragraph({
             children: [
                 new TextRun({
-                    text: `Exported by MD-Export Chrome Extension  ·  ${date}`,
+                    text: `Exported by Inkfold Chrome Extension  ·  ${date}`,
                     color: C.muted,
                     italics: true,
                     size: 16,
@@ -150,7 +150,7 @@ export async function toDocx(processed) {
     );
 
     const doc = new Document({
-        creator: 'MD-Export Chrome Extension',
+        creator: 'Inkfold Chrome Extension',
         title,
         sections: [{ properties: {}, children }],
     });

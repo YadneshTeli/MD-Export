@@ -1,5 +1,5 @@
 /**
- * popup.js – MD-Export popup controller
+ * popup.js – Inkfold popup controller
  * Handles site detection, format selection, export triggering, and clipboard copy.
  */
 

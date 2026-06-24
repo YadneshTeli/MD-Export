@@ -1,12 +1,12 @@
-# Privacy Policy for MD-Export
+# Privacy Policy for Inkfold
 
-**Last Updated:** June 17, 2026
+**Last Updated:** June 24, 2026
 
-MD-Export ("we", "our", or "the Extension") is committed to protecting your privacy. This Privacy Policy explains how our extension handles user data.
+Inkfold ("we", "our", or "the Extension") is committed to protecting your privacy. This Privacy Policy explains how our extension handles user data.
 
 ## 1. Zero Data Collection
 
-MD-Export does **not** collect, store, or transmit any personal data, chat history, or browsing activity. 
+Inkfold does **not** collect, store, or transmit any personal data, chat history, or browsing activity. 
 
 All core operations of the extension:
 - Scraping chat message content from supported platforms (ChatGPT, Claude, Gemini, Grok)
@@ -18,7 +18,7 @@ are executed **entirely locally within your web browser**.
 
 ## 2. Remote Servers
 
-The Extension does **not** communicate with any remote servers, APIs, or databases. There are no analytics, crash reporting trackers, or advertising SDKs bundled inside MD-Export. 
+The Extension does **not** communicate with any remote servers, APIs, or databases. There are no analytics, crash reporting trackers, or advertising SDKs bundled inside Inkfold. 
 
 All your conversation data remains on your machine and never leaves your browser sandbox.
 
@@ -31,4 +31,4 @@ To function correctly, the Extension requests the following browser permissions:
 
 ## 4. Contact
 
-If you have any questions or concerns regarding this Privacy Policy, please open an issue on our [GitHub Repository](https://github.com/YadneshTeli/MD-Export).
+If you have any questions or concerns regarding this Privacy Policy, please open an issue on our [GitHub Repository](https://github.com/YadneshTeli/Inkfold).
