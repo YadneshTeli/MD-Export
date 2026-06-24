@@ -30,7 +30,7 @@ jobs:
       - name: Package extension zip
         run: |
           VERSION=${GITHUB_REF_NAME}
-          ZIP_NAME="md-export-${VERSION}.zip"
+          ZIP_NAME="inkfold-${VERSION}.zip"
           zip -r "$ZIP_NAME" dist/ popup/ icons/ manifest.json
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
@@ -38,9 +38,9 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "MD-Export ${{ env.VERSION }}"
+          name: "Inkfold ${{ env.VERSION }}"
           body: |
-            ## MD-Export ${{ env.VERSION }}
+            ## Inkfold ${{ env.VERSION }}
 
             ### Installation
             1. Download `${{ env.ZIP_NAME }}` below
