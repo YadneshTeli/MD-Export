@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.6] – 2026-06-24
+## [1.0.7] – 2026-06-24
 
 ### Changed
 
 - **Project Rebranding** – Renamed the project from MD-Export to **Inkfold**, updated all logo text, HTML titles, document creator metadata, and updated the GitHub repository URL to `https://github.com/YadneshTeli/Inkfold`.
+
+---
+
+## [1.0.6] – 2026-06-17
 
 ### Added
 

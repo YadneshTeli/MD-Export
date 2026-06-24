@@ -1,6 +1,6 @@
 # Inkfold – AI Chat Exporter
 
-[![Version](https://img.shields.io/badge/version-1.0.6-6C63FF?style=flat-square)](https://github.com/YadneshTeli/Inkfold/releases)
+[![Version](https://img.shields.io/badge/version-1.0.7-6C63FF?style=flat-square)](https://github.com/YadneshTeli/Inkfold/releases)
 [![License](https://img.shields.io/badge/license-MIT-3B82F6?style=flat-square)](LICENSE)
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow?style=flat-square&logo=google-chrome)](https://github.com/YadneshTeli/Inkfold/releases/latest)
 [![Platforms](https://img.shields.io/badge/supports-ChatGPT%20%7C%20Claude%20%7C%20Gemini%20%7C%20Grok-52C77E?style=flat-square)](#-supported-platforms)

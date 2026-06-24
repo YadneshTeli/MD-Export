@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Inkfold – AI Chat Exporter",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Export ChatGPT, Gemini, Grok, and Claude conversations as Markdown, DOCX, or PDF with full formatting preserved.",
   "homepage_url": "https://github.com/YadneshTeli/Inkfold",
   "minimum_chrome_version": "88",
