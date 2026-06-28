@@ -68,7 +68,7 @@ Provide these exact descriptions in the console's permission justification texta
 ### Privacy Declarations / User Data
 *   **Data Usage**: Select **"No"** to "Does this extension collect or transmit user data?"
 *   **Privacy Policy URL**: Host the `PRIVACY.md` file contents on your website or use the GitHub raw link:
-    `https://github.com/YadneshTeli/Inkfold/blob/main/PRIVACY.md`
+    `https://raw.githubusercontent.com/YadneshTeli/Inkfold/main/PRIVACY.md`
 
 ---
 
